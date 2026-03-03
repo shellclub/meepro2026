@@ -1,19 +1,23 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { staticBanners } from '@/lib/static-data';
+
+let prisma: any = null;
+try {
+  prisma = require('@/lib/prisma').default;
+} catch (e) {}
 
 export async function GET() {
   try {
-    const banners = await prisma.banner.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    });
-
-    return NextResponse.json({ banners });
-  } catch (error) {
-    console.error('Error fetching banners:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch banners' },
-      { status: 500 }
-    );
+    if (prisma) {
+      const banners = await prisma.banner.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      });
+      return NextResponse.json({ banners });
+    }
+  } catch (e) {
+    // DB not available
   }
+
+  return NextResponse.json({ banners: staticBanners });
 }

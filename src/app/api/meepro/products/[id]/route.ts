@@ -1,50 +1,61 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { staticProducts } from '@/lib/static-data';
+
+let prisma: any = null;
+try {
+  prisma = require('@/lib/prisma').default;
+} catch (e) {}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+  const productId = parseInt(id);
+
   try {
-    const { id } = await params;
-    const productId = parseInt(id);
+    if (prisma) {
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        include: {
+          category: { select: { id: true, name: true, slug: true } },
+          brand: { select: { id: true, name: true, slug: true } },
+          images: { orderBy: { sortOrder: 'asc' } },
+          variants: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
+        },
+      });
 
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        category: { select: { id: true, name: true, slug: true } },
-        brand: { select: { id: true, name: true, slug: true } },
-        images: { orderBy: { sortOrder: 'asc' } },
-        variants: { where: { isActive: true }, orderBy: { name: 'asc' } },
-      },
-    });
+      if (!product) {
+        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      }
 
-    if (!product) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
+      const relatedProducts = await prisma.product.findMany({
+        where: {
+          categoryId: product.categoryId,
+          id: { not: product.id },
+          isActive: true,
+        },
+        include: {
+          images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        },
+        take: 4,
+      });
+
+      return NextResponse.json({ product, relatedProducts });
     }
-
-    // Get related products from same category
-    const relatedProducts = await prisma.product.findMany({
-      where: {
-        categoryId: product.categoryId,
-        id: { not: product.id },
-        isActive: true,
-      },
-      include: {
-        images: { where: { isMain: true }, take: 1 },
-      },
-      take: 8,
-    });
-
-    return NextResponse.json({ product, relatedProducts });
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch product' },
-      { status: 500 }
-    );
+  } catch (e) {
+    // DB not available
   }
+
+  // Static fallback
+  const product = staticProducts.find(p => p.id === productId);
+  if (!product) {
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+  }
+
+  const relatedProducts = staticProducts
+    .filter(p => p.category?.id === product.category?.id && p.id !== product.id)
+    .slice(0, 4);
+
+  return NextResponse.json({ product, relatedProducts });
 }

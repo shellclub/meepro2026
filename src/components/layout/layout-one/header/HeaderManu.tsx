@@ -302,135 +302,43 @@ function HeaderManu() {
                   <div className="col-md-12 align-self-center">
                     <div className="gi-main-menu">
                       <ul>
-                        <li className="dropdown drop-list">
-                          <Link href="/home" className="dropdown-arrow">
+                        <li className="non-drop">
+                          <Link href="/home">
                             หน้าแรก
                           </Link>
-                          <ul className="sub-menu">
-                            {home.map((data, index) => (
-                              <li key={index}>
-                                <Link href={data.href}>{data.name}</Link>
-                              </li>
-                            ))}
-                          </ul>
                         </li>
-                        <li className="dropdown drop-list position-static">
-                          <Link href="" className="dropdown-arrow">
-                            Categories
-                            <i className="fi-rr-angle-small-right"></i>
+                        <li className="non-drop">
+                          <Link href="/shop">
+                            🛍️ สินค้าทั้งหมด
                           </Link>
-                          <ul className="mega-menu d-block">
-                            <li className="d-flex">
-                              <span className="bg"></span>
-                              <ul className="d-block mega-block">
-                                <li className="menu_title">
-                                  <Link href="/">Classic</Link>
-                                </li>
-                                {classic.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                              <ul className="d-block mega-block">
-                                <li className="menu_title">
-                                  <Link href="">Banner</Link>
-                                </li>
-                                {banner.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                              <ul className="d-block mega-block">
-                                <li className="menu_title">
-                                  <Link href="">Columns</Link>
-                                </li>
-                                {column.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                              <ul className="d-block mega-block">
-                                <li className="menu_title">
-                                  <Link href="">List</Link>
-                                </li>
-                                {list.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </li>
-                          </ul>
                         </li>
                         <li className="dropdown drop-list">
                           <Link href="" className="dropdown-arrow">
-                            Products<i className="fi-rr-angle-small-right"></i>
+                            หมวดหมู่<i className="fi-rr-angle-small-right"></i>
                           </Link>
                           <ul className="sub-menu">
-                            {productpage.map((data, index) => (
-                              <li
-                                key={index}
-                                className="dropdown position-static"
-                              >
-                                <Link href="">
-                                  {data.name}
-                                  <i className="fi-rr-angle-small-right"></i>
-                                </Link>
-                                <ul className="sub-menu sub-menu-child">
-                                  {data.subname.map((subPage, subIndex) => (
-                                    <React.Fragment key={subIndex}>
-                                      <li>
-                                        <Link href={subPage.href}>
-                                          {subPage.name}
-                                        </Link>
-                                      </li>
-                                    </React.Fragment>
-                                  ))}
-                                </ul>
-                              </li>
-                            ))}
-                            <li>
-                              <a href="/product-full-width">
-                                Product full width
-                              </a>
-                            </li>
-                            <li>
-                              <a href="/product-according-full-width">
-                                accordion full width
-                              </a>
-                            </li>
-                          </ul>
-                        </li>
-                        <li className="dropdown drop-list">
-                          <Link href="" className="dropdown-arrow">
-                            Blog<i className="fi-rr-angle-small-right"></i>
-                          </Link>
-                          <ul className="sub-menu">
-                            {blog.map((data, index) => (
-                              <li key={index}>
-                                <Link href={data.href}>{data.name}</Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </li>
-                        <li className="dropdown drop-list">
-                          <Link href="" className="dropdown-arrow">
-                            Pages<i className="fi-rr-angle-small-right"></i>
-                          </Link>
-                          <ul className="sub-menu">
-                            {pages.map((data, index) => (
-                              <li key={index}>
-                                <Link href={data.href}>{data.name}</Link>
-                              </li>
-                            ))}
+                            <li><Link href="/shop?category=cat-food">🐟 อาหารแมว</Link></li>
+                            <li><Link href="/shop?category=cat-treats">🍖 ขนมแมว</Link></li>
+                            <li><Link href="/shop?category=cat-litter">🧹 ทรายแมว</Link></li>
+                            <li><Link href="/shop?category=cat-toys">🐭 ของเล่นแมว</Link></li>
+                            <li><Link href="/shop?category=grooming">🧴 อุปกรณ์อาบน้ำ</Link></li>
+                            <li><Link href="/shop?category=cat-beds">🛏️ ที่นอนแมว</Link></li>
+                            <li><Link href="/shop?category=feeding">🍽️ อุปกรณ์ให้อาหาร</Link></li>
                           </ul>
                         </li>
                         <li className="non-drop">
                           <Link href="/shop">
-                            สินค้าทั้งหมด
+                            <i className="fi-rr-badge-percent"></i> โปรโมชั่น
+                          </Link>
+                        </li>
+                        <li className="non-drop">
+                          <Link href="/about-us">
+                            เกี่ยวกับเรา
+                          </Link>
+                        </li>
+                        <li className="non-drop">
+                          <Link href="/contact-us">
+                            ติดต่อเรา
                           </Link>
                         </li>
                       </ul>

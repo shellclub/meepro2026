@@ -79,7 +79,7 @@ function HeaderOne({ cartItems, wishlistItems }) {
                     className="dropdown-toggle"
                     id="dropdown-basic"
                   >
-                    English
+                    ไทย
                     <i
                       className="fi-rr-angle-small-down"
                       aria-hidden="true"
@@ -102,7 +102,7 @@ function HeaderOne({ cartItems, wishlistItems }) {
                     className="dropdown-toggle"
                     id="dropdown-basic"
                   >
-                    Dollar
+                    บาท (฿)
                     <i
                       className="fi-rr-angle-small-down"
                       aria-hidden="true"
