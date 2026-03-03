@@ -1,0 +1,345 @@
+/* =============================================
+   MeePro Pet Shop - Custom Theme Override
+   Colors: Orange, Yellow/Gold, Gray, White
+   ============================================= */
+
+:root {
+  --meepro-primary: #F28C28;
+  --meepro-primary-dark: #D97A1E;
+  --meepro-primary-light: #FFAA4C;
+  --meepro-secondary: #FFD700;
+  --meepro-secondary-light: #FFE44D;
+  --meepro-gray-dark: #4B4B4B;
+  --meepro-gray: #6B6B6B;
+  --meepro-gray-light: #A0A0A0;
+  --meepro-gray-bg: #F5F5F5;
+  --meepro-cream: #FFF8F0;
+  --meepro-white: #FFFFFF;
+  --meepro-text: #333333;
+  --meepro-text-light: #777777;
+  --meepro-success: #28A745;
+  --meepro-danger: #DC3545;
+  --meepro-border: #EEEEEE;
+}
+
+/* =============================================
+   Override Grabit green (#5caf90) → MeePro orange
+   ============================================= */
+
+/* Primary accent color overrides */
+.gi-header .gi-header-action .gi-header-btn a .gi-header-count,
+.gi-product .gi-pro-content .gi-pro-opt li a:hover,
+.gi-product .gi-pro-content .gi-pro-opt li.active a,
+.gi-tab-list .nav-tabs .nav-link.active,
+.gi-tab-list .nav-tabs .nav-link:hover,
+.gi-category .gi-cat-content:hover .gi-cat-icon,
+.gi-banner .gi-banner-btn a:hover,
+.gi-btn-1:hover, .gi-btn-2,
+a:hover,
+.breadcrumb-item.active,
+.gi-breadcrumb .breadcrumb-item a:hover {
+  color: var(--meepro-primary) !important;
+}
+
+/* Background color overrides */
+.gi-btn-1,
+.gi-btn-2:hover,
+.gi-header .gi-header-action .gi-header-btn a .gi-header-count,
+.gi-deal-section .gi-deal-content .gi-deal-btn a,
+.gi-category .gi-cat-content:hover .gi-cat-icon,
+.checkbox.style-c input:checked ~ .checkbox__checkmark,
+.gi-product .gi-pro-content .gi-pro-opt li a:hover,
+.swiper-pagination-bullet-active,
+.gi-trending-products .section-title .gi-trending-btn a:hover,
+.owl-dots .owl-dot.active span {
+  background-color: var(--meepro-primary) !important;
+}
+
+/* Border color overrides */
+.gi-btn-1,
+.gi-btn-2:hover,
+.gi-product:hover,
+.gi-category .gi-cat-content:hover,
+.gi-tab-list .nav-tabs .nav-link.active,
+.gi-tab-list .nav-tabs .nav-link:hover {
+  border-color: var(--meepro-primary) !important;
+}
+
+/* Switch toggle */
+.switch input:checked ~ label {
+  border-color: var(--meepro-primary) !important;
+}
+.switch input:checked ~ label::after {
+  background: var(--meepro-primary) !important;
+}
+
+/* Toastify link color */
+.Toastify__toast-body div a {
+  color: var(--meepro-primary) !important;
+}
+
+/* =============================================
+   Header Styles
+   ============================================= */
+.gi-header {
+  border-bottom: 2px solid var(--meepro-primary) !important;
+}
+
+.gi-header .gi-header-action .gi-header-btn a .gi-header-count {
+  background-color: var(--meepro-primary) !important;
+}
+
+/* Navigation hover */
+.gi-main-menu ul li a:hover,
+.gi-main-menu ul li.active > a {
+  color: var(--meepro-primary) !important;
+}
+
+/* Category menu hover */
+.gi-cat-dropdown .gi-cat-menu li a:hover {
+  color: var(--meepro-primary) !important;
+}
+
+/* =============================================
+   Product Cards
+   ============================================= */
+.gi-product:hover {
+  box-shadow: 0 5px 20px rgba(242, 140, 40, 0.15) !important;
+}
+
+.gi-product .gi-pro-content .gi-pro-title a:hover {
+  color: var(--meepro-primary) !important;
+}
+
+.gi-product .gi-pro-content .gi-price .new-price {
+  color: var(--meepro-primary) !important;
+}
+
+/* Sale/New badge */
+.gi-product .gi-pro-image .gi-pro-tag .tag-new {
+  background: var(--meepro-primary) !important;
+}
+
+.gi-product .gi-pro-image .gi-pro-tag .tag-sale {
+  background: var(--meepro-secondary) !important;
+  color: var(--meepro-text) !important;
+}
+
+/* =============================================
+   Category Section
+   ============================================= */
+.gi-category .gi-cat-content .gi-cat-icon i {
+  color: var(--meepro-primary);
+}
+
+.gi-category .gi-cat-content:hover {
+  border-color: var(--meepro-primary) !important;
+}
+
+.gi-category .gi-cat-content:hover .gi-cat-icon {
+  background: var(--meepro-primary) !important;
+  color: var(--meepro-white) !important;
+}
+
+/* =============================================
+   Footer
+   ============================================= */
+.gi-footer {
+  background: var(--meepro-gray-dark) !important;
+}
+
+.gi-footer .footer-top {
+  border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.gi-footer a:hover {
+  color: var(--meepro-primary) !important;
+}
+
+.gi-footer .gi-footer-subscribe .gi-subscribe-input button {
+  background: var(--meepro-primary) !important;
+}
+
+/* =============================================
+   Deal / Promo Section
+   ============================================= */
+.gi-deal-section {
+  background: linear-gradient(135deg, var(--meepro-cream) 0%, #FFF3E0 100%) !important;
+}
+
+.gi-deal-section .gi-deal-content .gi-deal-btn a {
+  background: var(--meepro-primary) !important;
+  color: var(--meepro-white) !important;
+}
+
+.gi-deal-section .gi-deal-content .gi-deal-btn a:hover {
+  background: var(--meepro-primary-dark) !important;
+}
+
+/* =============================================
+   Price Range Slider
+   ============================================= */
+.noUi-connect {
+  background: var(--meepro-primary) !important;
+}
+
+.noUi-handle {
+  border-color: var(--meepro-primary) !important;
+}
+
+/* =============================================
+   Pagination
+   ============================================= */
+.gi-pro-pagination .pagination .page-item .page-link:hover,
+.gi-pro-pagination .pagination .page-item.active .page-link {
+  background: var(--meepro-primary) !important;
+  border-color: var(--meepro-primary) !important;
+  color: var(--meepro-white) !important;
+}
+
+/* =============================================
+   Buttons
+   ============================================= */
+.gi-btn-1 {
+  background: var(--meepro-primary) !important;
+  border-color: var(--meepro-primary) !important;
+  color: var(--meepro-white) !important;
+}
+
+.gi-btn-1:hover {
+  background: transparent !important;
+  color: var(--meepro-primary) !important;
+}
+
+.gi-btn-2 {
+  border-color: var(--meepro-primary) !important;
+  color: var(--meepro-primary) !important;
+}
+
+.gi-btn-2:hover {
+  background: var(--meepro-primary) !important;
+  color: var(--meepro-white) !important;
+}
+
+/* =============================================
+   Checkout & Cart
+   ============================================= */
+.gi-checkout-coupon {
+  color: var(--meepro-primary) !important;
+}
+
+/* =============================================
+   Breadcrumb
+   ============================================= */
+.gi-breadcrumb {
+  background: linear-gradient(135deg, var(--meepro-cream) 0%, #FFF3E0 100%) !important;
+}
+
+/* =============================================
+   Section Titles
+   ============================================= */
+.section-title .section-title-block h2::after {
+  background: var(--meepro-primary) !important;
+}
+
+/* =============================================
+   Star Rating
+   ============================================= */
+.gi-product .gi-pro-content .gi-pro-rating .gi-pro-rating-star i.fill {
+  color: var(--meepro-secondary) !important;
+}
+
+/* =============================================
+   Hero Slider / Banner overrides  
+   ============================================= */
+.gi-hero-slider .gi-hero-btn a {
+  background: var(--meepro-primary) !important;
+  border-color: var(--meepro-primary) !important;
+}
+
+.gi-hero-slider .gi-hero-btn a:hover {
+  background: var(--meepro-primary-dark) !important;
+}
+
+/* =============================================
+   Loader / Spinner
+   ============================================= */
+.gi-loader .loader {
+  border-top-color: var(--meepro-primary) !important;
+}
+
+/* =============================================
+   Sidebar filters
+   ============================================= */
+.gi-sidebar .gi-sidebar-block .gi-sidebar-title h3 {
+  color: var(--meepro-text) !important;
+}
+
+/* =============================================
+   Scrollbar
+   ============================================= */
+::-webkit-scrollbar-thumb {
+  background: var(--meepro-primary) !important;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--meepro-gray-bg);
+}
+
+/* =============================================
+   Admin Dashboard (Phase 2)
+   ============================================= */
+.admin-sidebar {
+  background: var(--meepro-gray-dark);
+}
+
+.admin-sidebar .nav-link.active,
+.admin-sidebar .nav-link:hover {
+  background: var(--meepro-primary);
+  color: var(--meepro-white);
+}
+
+/* =============================================
+   Custom Pet Shop Styles
+   ============================================= */
+.meepro-badge-new {
+  background: var(--meepro-primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.meepro-badge-sale {
+  background: var(--meepro-secondary);
+  color: var(--meepro-text);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.meepro-price {
+  color: var(--meepro-primary);
+  font-weight: 700;
+}
+
+.meepro-old-price {
+  color: var(--meepro-gray-light);
+  text-decoration: line-through;
+  font-size: 0.9em;
+}
+
+/* Responsive product grid */
+@media (max-width: 575px) {
+  .gi-product-content .row > [class*="col-"] {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
