@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /path/to/your/project/folder/meepro-nextjs15
+            cd /root/meepro2026
             git pull origin main
             
             # Rebuild and restart the container
