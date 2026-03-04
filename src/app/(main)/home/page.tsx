@@ -15,29 +15,28 @@ import "swiper/css/navigation";
 // Hero Slider Component
 // ==========================================
 function HeroSlider() {
-  const slides = [
-    {
-      image: "/assets/img/banners/banner-1.jpg",
-      title: "อาหารแมวคุณภาพ",
-      subtitle: "ลดสูงสุด 30% สำหรับสมาชิก",
-      btnText: "ช้อปเลย",
-      btnLink: "/shop?category=cat-food",
-    },
-    {
-      image: "/assets/img/banners/banner-2.jpg",
-      title: "ของเล่นแมว มาใหม่!",
-      subtitle: "สนุกสนานทั้งวัน สำหรับน้องเหมียว",
-      btnText: "ดูสินค้า",
-      btnLink: "/shop?category=cat-toys",
-    },
-    {
-      image: "/assets/img/banners/banner-3.jpg",
-      title: "ดูแลสุขภาพ น้องแมว",
-      subtitle: "แชมพู ทรายแมว อุปกรณ์ครบครัน",
-      btnText: "เลือกซื้อ",
-      btnLink: "/shop?category=grooming",
-    },
-  ];
+  const [slides, setSlides] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/meepro/banners")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.banners && data.banners.length > 0) {
+          setSlides(data.banners);
+        } else {
+          // Fallback if no data
+          setSlides([
+            {
+              image: "/assets/img/banners/banner-1.jpg",
+              title: "อาหารแมวคุณภาพ",
+              subtitle: "ลดสูงสุด 30% สำหรับสมาชิก",
+              link: "/shop?category=cat-food",
+            }
+          ]);
+        }
+      })
+      .catch((e) => console.error(e));
+  }, []);
 
   return (
     <section className="gi-hero-section" style={{ marginBottom: "30px" }}>
@@ -107,7 +106,7 @@ function HeroSlider() {
                     {slide.subtitle}
                   </p>
                   <Link
-                    href={slide.btnLink}
+                    href={slide.link || slide.btnLink || "#"}
                     className="gi-btn-1"
                     style={{
                       display: "inline-block",
@@ -117,7 +116,7 @@ function HeroSlider() {
                       textDecoration: "none",
                     }}
                   >
-                    {slide.btnText} →
+                    {slide.btnText || "ช้อปเลย"} →
                   </Link>
                 </div>
               </div>
@@ -130,18 +129,28 @@ function HeroSlider() {
 }
 
 // ==========================================
-// Categories Section
-// ==========================================
+// Emoji map for category slugs (similar to HeaderManu)
+const categoryEmojis: Record<string, { icon: string; color: string }> = {
+  "cat-food": { icon: "🐟", color: "#FF8C42" },
+  "cat-treats": { icon: "🍖", color: "#FFD700" },
+  "cat-litter": { icon: "🏖️", color: "#A0A0A0" },
+  "cat-toys": { icon: "🐭", color: "#FF6B6B" },
+  "grooming": { icon: "🧴", color: "#4ECDC4" },
+  "cat-beds": { icon: "🛏️", color: "#C9B1FF" },
+  "feeding": { icon: "🍽️", color: "#FF9A9E" },
+};
+
 function CategoriesSection() {
-  const categories = [
-    { name: "อาหารแมว", slug: "cat-food", icon: "🐟", color: "#FF8C42" },
-    { name: "ขนมแมว", slug: "cat-treats", icon: "🍖", color: "#FFD700" },
-    { name: "ทรายแมว", slug: "cat-litter", icon: "🏖️", color: "#A0A0A0" },
-    { name: "ของเล่นแมว", slug: "cat-toys", icon: "🐭", color: "#FF6B6B" },
-    { name: "อุปกรณ์อาบน้ำ", slug: "grooming", icon: "🧴", color: "#4ECDC4" },
-    { name: "ที่นอนแมว", slug: "cat-beds", icon: "🛏️", color: "#C9B1FF" },
-    { name: "อุปกรณ์ให้อาหาร", slug: "feeding", icon: "🍽️", color: "#FF9A9E" },
-  ];
+  const [categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/meepro/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        setCategories(data.categories || []);
+      })
+      .catch((e) => console.error(e));
+  }, []);
 
   return (
     <section className="gi-category section-padding" style={{ padding: "40px 0" }}>
@@ -191,14 +200,14 @@ function CategoriesSection() {
                       width: "70px",
                       height: "70px",
                       borderRadius: "50%",
-                      background: `${cat.color}15`,
+                      background: `${categoryEmojis[cat.slug]?.color || "#F28C28"}15`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       margin: "0 auto 12px auto",
                     }}
                   >
-                    {cat.icon}
+                    {categoryEmojis[cat.slug]?.icon || "📦"}
                   </div>
                   <h6
                     style={{
@@ -343,7 +352,7 @@ function ProductCard({ product }: { product: any }) {
             style={{
               color: "#333",
               textDecoration: "none",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: "600",
               display: "-webkit-box",
               WebkitLineClamp: 2,
@@ -423,7 +432,7 @@ function FeaturedProducts() {
         </div>
         <div className="row g-3">
           {products.map((product) => (
-            <div key={product.id} className="col-6 col-md-4 col-lg-3">
+            <div key={product.id} className="col-12 col-md-4 col-lg-3">
               <ProductCard product={product} />
             </div>
           ))}
@@ -492,7 +501,7 @@ function AllProducts() {
         </div>
         <div className="row g-3">
           {products.map((product) => (
-            <div key={product.id} className="col-6 col-md-4 col-lg-3">
+            <div key={product.id} className="col-12 col-md-4 col-lg-3">
               <ProductCard product={product} />
             </div>
           ))}

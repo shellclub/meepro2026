@@ -1,4 +1,21 @@
+version: '3.8'
+
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meepro-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=mysql://root:pwD@20200@mariadb:3306/meepro_petshop
+    depends_on:
+      - mariadb
+    networks:
+      - meepro-net
+
   mariadb:
     image: mariadb:11
     container_name: meepro-mariadb
@@ -12,6 +29,11 @@ services:
       MARIADB_COLLATION: utf8mb4_unicode_ci
     volumes:
       - meepro_db_data:/var/lib/mysql
+    networks:
+      - meepro-net
 
 volumes:
   meepro_db_data:
+
+networks:
+  meepro-net:

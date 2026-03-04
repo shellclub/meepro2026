@@ -68,8 +68,7 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                         alt="footer logo"
                       />
                       <p className="gi-footer-detail">
-                        Grabit is the biggest market of grocery products. Get
-                        your daily needs from our store.
+                        MeePro เป็นร้านขายอาหารและอุปกรณ์สัตว์เลี้ยงที่ครอบคลุมที่สุด ช้อปปิ้งของใช้ประจำวันสำหรับสัตว์เลี้ยงที่คุณรักได้ที่ร้านของเรา
                       </p>
                       <div className="gi-app-store">
                         <a href="#" className="app-img">
@@ -103,7 +102,7 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                         onClick={() => toggleDropdown("category")}
                         className="gi-footer-heading"
                       >
-                        Category
+                        หมวดหมู่สินค้า
                         <div className="gi-heading-res">
                           <i
                             className="fi-rr-angle-small-down"
@@ -153,7 +152,7 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                         onClick={() => toggleDropdown("company")}
                         className="gi-footer-heading"
                       >
-                        Company
+                        บริษัท
                         <div className="gi-heading-res">
                           <i
                             className="fi-rr-angle-small-down"
@@ -179,22 +178,22 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                       >
                         <ul className="align-itegi-center">
                           <li className="gi-footer-link">
-                            <a href="/about-us">About us</a>
+                            <a href="/about-us">เกี่ยวกับเรา</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="/track-order">Delivery</a>
+                            <a href="/track-order">การจัดส่ง</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="/privacy-policy">Legal Notice</a>
+                            <a href="/privacy-policy">นโยบายความเป็นส่วนตัว</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="/terms-condition">Terms & conditions</a>
+                            <a href="/terms-condition">ข้อกำหนดและเงื่อนไข</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="/checkout">Secure payment</a>
+                            <a href="/checkout">ความปลอดภัยการชำระเงิน</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="/contact-us">Contact us</a>
+                            <a href="/contact-us">ติดต่อเรา</a>
                           </li>
                         </ul>
                       </motion.div>
@@ -208,7 +207,7 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                         onClick={() => toggleDropdown("account")}
                         className="gi-footer-heading"
                       >
-                        Account
+                        บัญชีของฉัน
                         <div className="gi-heading-res">
                           <i
                             className="fi-rr-angle-small-down"
@@ -234,22 +233,22 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                       >
                         <ul className="align-itegi-center">
                           <li className="gi-footer-link">
-                            <a href="/register">Sign In</a>
+                            <a href="/register">เข้าสู่ระบบ / สมัครสมาชิก</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="/cart">View Cart</a>
+                            <a href="/cart">ตะกร้าสินค้าของฉัน</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="/privacy-policy">Return Policy</a>
+                            <a href="/privacy-policy">นโยบายการคืนสินค้า</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="#">Become a Vendor</a>
+                            <a href="#">ศูนย์ช่วยเหลือ</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="#">Affiliate Program</a>
+                            <a href="#">โปรแกรมสะสมแต้ม</a>
                           </li>
                           <li className="gi-footer-link">
-                            <a href="/checkout">Payments</a>
+                            <a href="/checkout">ช่องทางการชำระเงิน</a>
                           </li>
                         </ul>
                       </motion.div>
@@ -264,7 +263,7 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                           onClick={() => toggleDropdown("contact")}
                           className="gi-footer-heading"
                         >
-                          Contact
+                          ติดต่อเรา
                           <div className="gi-heading-res">
                             <i
                               className="fi-rr-angle-small-down"
@@ -294,22 +293,21 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                                 <i className="fi fi-rr-marker location svg_img foo_svg"></i>
                               </span>
                               <p>
-                                2548 Broaddus Maple Court, Madisonville KY 4783,
-                                USA.
+                                123/45 ถนนเพชรเกษม แขวงบางแคเหนือ เขตบางแค กรุงเทพมหานคร 10160
                               </p>
                             </li>
                             <li className="gi-footer-link gi-foo-call">
                               <span>
                                 <i className="fi fi-brands-whatsapp svg_img foo_svg"></i>
                               </span>
-                              <a href="tel:+009876543210">+00 9876543210</a>
+                              <a href="tel:+66987654321">098-765-4321</a>
                             </li>
                             <li className="gi-footer-link gi-foo-mail">
                               <span>
                                 <i className="fi fi-rr-envelope"></i>
                               </span>
-                              <a href="mailto:example@email.com">
-                                example@email.com
+                              <a href="mailto:support@meepro.com">
+                                support@meepro.com
                               </a>
                             </li>
                           </ul>
@@ -382,11 +380,11 @@ function Footer({ onSuccess = () => {}, onError = () => {} }) {
                   <div className="footer-copy">
                     <div className="footer-bottom-copy ">
                       <div className="gi-copy">
-                        Copyright ©{" "}
+                        สงวนลิขสิทธิ์ ©{" "}
                         <Link className="site-name" href="/">
-                          Grabit{" "}
+                          MeePro{" "}
                         </Link>
-                        all rights reserved. Powered by Grabit.
+                        ขับเคลื่อนโดย MeePro
                       </div>
                     </div>
                   </div>

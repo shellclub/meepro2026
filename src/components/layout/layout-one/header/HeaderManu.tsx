@@ -1,41 +1,54 @@
 "use client";
-import React, { useState } from "react";
-import home from "../../../../utility/header/home";
-import classic from "../../../../utility/header/classic";
-import banner from "../../../../utility/header/benner";
-import column from "../../../../utility/header/columns";
-import list from "../../../../utility/header/list";
-import blog from "../../../../utility/header/blog";
-import pages from "../../../../utility/header/pages";
-import fruits from "../../../../utility/header/fruits";
-import bakery from "../../../../utility/header/bakery";
-import snacks from "../../../../utility/header/snacks";
-import spice from "../../../../utility/header/spice";
-import juice from "../../../../utility/header/juice";
-import softdrink from "../../../../utility/header/softdrink";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import productpage from "../../../../utility/header/productpage";
-import CurrentLocation from "./CurrentLocation";
-import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
-import { Fade } from "react-awesome-reveal";
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  image?: string;
+  _count?: { products: number };
+}
+
+// Emoji map for category slugs
+const categoryEmojis: Record<string, string> = {
+  "cat-food": "🐟",
+  "cat-treats": "🍖",
+  "cat-litter": "🧹",
+  "cat-toys": "🐭",
+  "grooming": "🧴",
+  "cat-beds": "🛏️",
+  "feeding": "🍽️",
+};
 
 function HeaderManu() {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleProductClick = (index: number) => {
-    setSelectedIndex(index);
-  };
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/meepro/categories");
+        const data = await res.json();
+        if (data.categories) {
+          setCategories(data.categories);
+        }
+      } catch (e) {
+        console.error("Failed to fetch categories:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   return (
     <>
       <div className="gi-header-cat d-none d-lg-block">
         <div className="container position-relative">
           <div className="gi-nav-bar">
             {/* <!-- Category Toggle --> */}
-            <Tabs
-              selectedIndex={selectedIndex}
-              onSelect={(selectedIndex) => setSelectedIndex(selectedIndex)}
-              className="gi-category-icon-block"
-            >
+            <div className="gi-category-icon-block">
               <div className="gi-category-menu">
                 <div className="gi-category-toggle">
                   <i className="fi fi-rr-apps"></i>
@@ -49,248 +62,66 @@ function HeaderManu() {
               <div className="gi-cat-dropdown">
                 <div className="gi-cat-block">
                   <div className="gi-cat-tab">
-                    <TabList>
-                      <div
-                        className="gi-tab-list nav flex-column nav-pills me-3"
-                        id="v-pills-tab"
-                        role="tablist"
-                        aria-orientation="vertical"
-                      >
-                        <Tab>
-                          <button
-                            className={`tab nav-link ${
-                              selectedIndex == 0 ? "active" : ""
-                            }`}
-                            onClick={() => handleProductClick(0)}
-                            key={"Dairy & Bakery"}
-                            id="v-pills-home-tab"
-                            data-bs-toggle="pill"
-                            data-bs-target="#v-pills-home"
-                            type="button"
-                            role="tab"
-                            aria-controls="v-pills-home"
-                            aria-selected="true"
+                    <div
+                      className="gi-tab-list nav flex-column nav-pills me-3"
+                      role="tablist"
+                      aria-orientation="vertical"
+                    >
+                      {loading ? (
+                        <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>
+                          กำลังโหลดหมวดหมู่...
+                        </div>
+                      ) : (
+                        categories.map((cat) => (
+                          <Link
+                            key={cat.id}
+                            href={`/shop?category=${cat.slug}`}
+                            className="nav-link"
                             style={{
-                              padding: "10px 50px 10px 20px",
-                              marginBottom: "10px",
+                              padding: "12px 24px",
+                              marginBottom: "4px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px",
+                              fontSize: "14px",
+                              color: "#333",
+                              textDecoration: "none",
+                              borderRadius: "6px",
+                              transition: "background-color 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              (e.target as HTMLElement).style.backgroundColor = "#fff5e6";
+                              (e.target as HTMLElement).style.color = "#e8910c";
+                            }}
+                            onMouseLeave={(e) => {
+                              (e.target as HTMLElement).style.backgroundColor = "transparent";
+                              (e.target as HTMLElement).style.color = "#333";
                             }}
                           >
-                            <i className="fi-rr-cupcake"></i>Dairy & Bakery
-                          </button>
-                        </Tab>
-                        <Tab>
-                          <button
-                            className={`nav-link ${
-                              selectedIndex == 1 ? "active" : ""
-                            }`}
-                            onClick={() => handleProductClick(1)}
-                            key={"Fruits & Vegetable"}
-                            id="v-pills-profile-tab"
-                            data-bs-toggle="pill"
-                            data-bs-target="#v-pills-profile"
-                            type="button"
-                            role="tab"
-                            aria-controls="v-pills-profile"
-                            aria-selected="false"
-                            style={{
-                              padding: "10px 22px",
-                              marginBottom: "10px",
-                            }}
-                          >
-                            <i className="fi fi-rs-apple-whole"></i>Fruits &
-                            Vegetable
-                          </button>
-                        </Tab>
-                        <Tab>
-                          <button
-                            className={`nav-link ${
-                              selectedIndex == 2 ? "active" : ""
-                            }`}
-                            onClick={() => handleProductClick(2)}
-                            key={"Snack & Spice"}
-                            id="v-pills-messages-tab"
-                            data-bs-toggle="pill"
-                            data-bs-target="#v-pills-messages"
-                            type="button"
-                            role="tab"
-                            aria-controls="v-pills-messages"
-                            aria-selected="false"
-                            style={{
-                              padding: "10px 50px 10px 20px",
-                              marginBottom: "10px",
-                            }}
-                          >
-                            <i className="fi fi-rr-popcorn"></i>Snack & Spice
-                          </button>
-                        </Tab>
-                        <Tab>
-                          <button
-                            className={`nav-link ${
-                              selectedIndex == 3 ? "active" : ""
-                            }`}
-                            onClick={() => handleProductClick(3)}
-                            key={"Juice & Drinks"}
-                            id="v-pills-settings-tab"
-                            data-bs-toggle="pill"
-                            data-bs-target="#v-pills-settings"
-                            type="button"
-                            role="tab"
-                            aria-controls="v-pills-settings"
-                            aria-selected="false"
-                            style={{
-                              padding: "10px 50px 10px 20px",
-                              marginBottom: "10px",
-                            }}
-                          >
-                            <i className="fi fi-rr-drink-alt"></i>Juice & Drinks{" "}
-                          </button>
-                        </Tab>
-                      </div>
-                    </TabList>
-                    <div className="tab-content" id="v-pills-tabContent">
-                      <Fade duration={500} delay={200}>
-                        <TabPanel
-                          className={`tab-pane fade ${
-                            selectedIndex === 0
-                              ? "show active product-block"
-                              : ""
-                          }`}
-                          role="tabpanel"
-                          aria-labelledby="v-pills-home-tab"
-                        >
-                          <div className="tab-list row">
-                            <div className="col">
-                              <h6 className="gi-col-title">Dairy</h6>
-                              <ul className="cat-list">
-                                {fruits.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div className="col">
-                              <h6 className="gi-col-title">Bakery</h6>
-                              <ul className="cat-list">
-                                {bakery.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </TabPanel>
-                      </Fade>
-                      <Fade duration={500} delay={200}>
-                        <TabPanel
-                          className={`tab-pane fade ${
-                            selectedIndex === 1
-                              ? "show active product-block"
-                              : ""
-                          }`}
-                          role="tabpanel"
-                          aria-labelledby="v-pills-profile-tab"
-                        >
-                          <div className="tab-list row">
-                            <div className="col">
-                              <h6 className="gi-col-title">Fruits</h6>
-                              <ul className="cat-list">
-                                {fruits.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div className="col">
-                              <h6 className="gi-col-title">Vegetable</h6>
-                              <ul className="cat-list">
-                                {fruits.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </TabPanel>
-                      </Fade>
-                      <Fade duration={500} delay={200}>
-                        <TabPanel
-                          className={`tab-pane fade ${
-                            selectedIndex === 2
-                              ? "show active product-block"
-                              : ""
-                          }`}
-                          id="v-pills-messages"
-                          role="tabpanel"
-                          aria-labelledby="v-pills-messages-tab"
-                        >
-                          <div className="tab-list row">
-                            <div className="col">
-                              <h6 className="gi-col-title">Snacks</h6>
-                              <ul className="cat-list">
-                                {snacks.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div className="col">
-                              <h6 className="gi-col-title">Spice</h6>
-                              <ul className="cat-list">
-                                {spice.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </TabPanel>
-                      </Fade>
-                      <Fade duration={500} delay={200}>
-                        <TabPanel
-                          className={`tab-pane fade ${
-                            selectedIndex === 3
-                              ? "show active product-block"
-                              : ""
-                          }`}
-                          id="v-pills-settings"
-                          role="tabpanel"
-                          aria-labelledby="v-pills-settings-tab"
-                        >
-                          <div className="tab-list row">
-                            <div className="col">
-                              <h6 className="gi-col-title">Juice</h6>
-                              <ul className="cat-list">
-                                {juice.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div className="col">
-                              <h6 className="gi-col-title">soft drink</h6>
-                              <ul className="cat-list">
-                                {softdrink.map((data, index) => (
-                                  <li key={index}>
-                                    <Link href={data.href}>{data.name}</Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </TabPanel>
-                      </Fade>
+                            <span style={{ fontSize: "18px" }}>
+                              {categoryEmojis[cat.slug] || "📦"}
+                            </span>
+                            <span>{cat.name}</span>
+                            {cat._count && (
+                              <span style={{
+                                marginLeft: "auto",
+                                fontSize: "12px",
+                                color: "#999",
+                                backgroundColor: "#f5f5f5",
+                                padding: "2px 8px",
+                                borderRadius: "10px",
+                              }}>
+                                {cat._count.products}
+                              </span>
+                            )}
+                          </Link>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
-            </Tabs>
+            </div>
 
             {/* <!-- Main Menu Start --> */}
             <div
@@ -317,13 +148,13 @@ function HeaderManu() {
                             หมวดหมู่<i className="fi-rr-angle-small-right"></i>
                           </Link>
                           <ul className="sub-menu">
-                            <li><Link href="/shop?category=cat-food">🐟 อาหารแมว</Link></li>
-                            <li><Link href="/shop?category=cat-treats">🍖 ขนมแมว</Link></li>
-                            <li><Link href="/shop?category=cat-litter">🧹 ทรายแมว</Link></li>
-                            <li><Link href="/shop?category=cat-toys">🐭 ของเล่นแมว</Link></li>
-                            <li><Link href="/shop?category=grooming">🧴 อุปกรณ์อาบน้ำ</Link></li>
-                            <li><Link href="/shop?category=cat-beds">🛏️ ที่นอนแมว</Link></li>
-                            <li><Link href="/shop?category=feeding">🍽️ อุปกรณ์ให้อาหาร</Link></li>
+                            {categories.map((cat) => (
+                              <li key={cat.id}>
+                                <Link href={`/shop?category=${cat.slug}`}>
+                                  {categoryEmojis[cat.slug] || "📦"} {cat.name}
+                                </Link>
+                              </li>
+                            ))}
                           </ul>
                         </li>
                         <li className="non-drop">
@@ -348,8 +179,6 @@ function HeaderManu() {
               </div>
             </div>
             {/* <!-- Main Menu End --> */}
-
-            <CurrentLocation />
           </div>
         </div>
       </div>

@@ -1,7 +1,13 @@
-// app/middleware.ts
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export async function middleware(req) {
+const secretKey = process.env.JWT_SECRET || 'fallback_secret_key_meepro_2026';
+const key = new TextEncoder().encode(secretKey);
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
   const response = NextResponse.next();
 
   // Allow all origins (you can specify your origin for more security in production)
@@ -14,6 +20,40 @@ export async function middleware(req) {
     return response;
   }
 
+  // Admin Auth Logic
+  const requestPath = pathname.replace(/\/$/, '');
+  const isAdminRoute = requestPath.startsWith('/admin') && requestPath !== '/admin/login';
+  const isAdminApi = requestPath.startsWith('/api/admin');
+  const isLoginRoute = requestPath === '/admin/login';
+
+  const token = req.cookies.get('admin_token')?.value;
+  let isValid = false;
+
+  if (token) {
+    try {
+      await jwtVerify(token, key);
+      isValid = true;
+    } catch (e) {
+      isValid = false;
+    }
+  }
+
+  if (isAdminRoute || isAdminApi) {
+    if (!isValid) {
+      if (isAdminApi) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/admin/login', req.url));
+    }
+  }
+
+  if (isLoginRoute && isValid) {
+    return NextResponse.redirect(new URL('/admin', req.url));
+  }
+
   return response;
 }
 
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+};

@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 // ==========================================
@@ -246,4 +245,20 @@ model Banner {
   updatedAt DateTime @updatedAt
 
   @@map("banners")
+}
+
+// ==========================================
+// ผู้ดูแลระบบ (Admin)
+// ==========================================
+model AdminUser {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique @db.VarChar(100)
+  password  String    @db.VarChar(255) // Hashed password
+  name      String    @db.VarChar(100)
+  role      String    @default("admin") @db.VarChar(50) // admin, superadmin
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("admin_users")
 }

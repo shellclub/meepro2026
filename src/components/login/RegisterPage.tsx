@@ -176,14 +176,14 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
 
   return (
     <>
-      <Breadcrumb title={"Register Page"} />
+      <Breadcrumb title={"สมัครสมาชิก"} />
       <section className="gi-register padding-tb-40">
         <div className="container">
           <div className="section-title-2">
             <h2 className="gi-title">
-              Register<span></span>
+              สมัครสมาชิก<span></span>
             </h2>
-            <p>Best place to buy and sell digital products.</p>
+            <p>แหล่งรวมสินค้าและอาหารสำหรับสัตว์เลี้ยงที่คุณรัก</p>
           </div>
           <div className="row">
             <div className="gi-register-wrapper">
@@ -205,12 +205,12 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                       <>
                         <Form noValidate onSubmit={handleSubmit}>
                           <span className="gi-register-wrap gi-register-half">
-                            <label htmlFor="firstname">First Name*</label>
+                            <label htmlFor="firstname">ชื่อ*</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
                                 name="firstName"
-                                placeholder="Enter your first name"
+                                placeholder="กรอกชื่อของคุณ"
                                 value={values.firstName}
                                 onChange={handleChange}
                                 isInvalid={!!errors.firstName}
@@ -225,12 +225,12 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             </Form.Group>
                           </span>
                           <span className="gi-register-wrap gi-register-half">
-                            <label>Last Name*</label>
+                            <label>นามสกุล*</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
                                 name="lastName"
-                                placeholder="Enter your last name"
+                                placeholder="กรอกนามสกุลของคุณ"
                                 required
                                 value={values.lastName}
                                 onChange={handleChange}
@@ -248,12 +248,12 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>Email*</label>
+                            <label>อีเมล*</label>
                             <Form.Group>
                               <Form.Control
                                 type="email"
                                 name="email"
-                                placeholder="Enter your email add..."
+                                placeholder="กรอกอีเมลของคุณ..."
                                 required
                                 value={values.email}
                                 onChange={handleChange}
@@ -271,12 +271,12 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>Phone Number*</label>
+                            <label>เบอร์โทรศัพท์*</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
                                 name="phoneNumber"
-                                placeholder="Enter your phone number"
+                                placeholder="กรอกเบอร์โทรศัพท์"
                                 pattern="^\d{10,12}$"
                                 required
                                 value={values.phoneNumber}
@@ -295,12 +295,12 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>Password*</label>
+                            <label>รหัสผ่าน*</label>
                             <Form.Group>
                               <Form.Control
                                 type="password"
                                 name="password"
-                                placeholder="Enter your password"
+                                placeholder="กรอกรหัสผ่าน"
                                 pattern="^\d{6,12}$"
                                 required
                                 value={values.password}
@@ -319,12 +319,12 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>Conform Password*</label>
+                            <label>ยืนยันรหัสผ่าน*</label>
                             <Form.Group>
                               <Form.Control
                                 type="password"
                                 name="confirmPassword"
-                                placeholder="Enter your Conform password"
+                                placeholder="กรอกยืนยันรหัสผ่าน"
                                 pattern="^\d{6,12}$"
                                 required
                                 value={values.confirmPassword}
@@ -343,12 +343,12 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap"
                           >
-                            <label>Address</label>
+                            <label>ที่อยู่</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
                                 name="address"
-                                placeholder="Address Line 1"
+                                placeholder="ที่อยู่"
                                 value={values.address}
                                 onChange={handleChange}
                                 isInvalid={!!errors.address}
@@ -366,7 +366,7 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>Country *</label>
+                            <label>ประเทศ *</label>
                             <Form.Group
                               className={`gi-rg-select-inner  ${
                                 !!errors.country ? "is-invalid" : ""
@@ -386,7 +386,7 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                                 isInvalid={!!errors.country}
                               >
                                 <option value="" disabled>
-                                  Country
+                                  ประเทศ
                                 </option>
                                 {filteredCountryData.map(
                                   (country: any, index) => (
@@ -409,7 +409,7 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>Region State</label>
+                            <label>รัฐ/จังหวัด</label>
                             <Form.Group
                               className={`gi-rg-select-inner  ${
                                 !!errors.state ? "is-invalid" : ""
@@ -429,10 +429,10 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                                 isInvalid={!!errors.state}
                               >
                                 <option value="" disabled>
-                                  Region/State
+                                  รัฐ/จังหวัด
                                 </option>
                                 {loadingStates ? (
-                                  <option disabled>Loading...</option>
+                                  <option disabled>กำลังโหลด...</option>
                                 ) : (
                                   filteredStateData.map((state: any, index) => (
                                     <option
@@ -457,7 +457,7 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>City *</label>
+                            <label>เมือง/อำเภอ *</label>
                             <Form.Group
                               className={`gi-rg-select-inner  ${
                                 !!errors.city ? "is-invalid" : ""
@@ -474,10 +474,10 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                                 required
                               >
                                 <option value="" disabled>
-                                  City
+                                  เมือง/อำเภอ
                                 </option>
                                 {loadingCities ? (
-                                  <option disabled>Loading...</option>
+                                  <option disabled>กำลังโหลด...</option>
                                 ) : (
                                   filteredCityData.map((city: any, index) => (
                                     <option key={index} value={city.iso2}>
@@ -497,13 +497,13 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>Post Code</label>
+                            <label>รหัสไปรษณีย์</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
                                 name="postCode"
                                 pattern="^\d{5,6}$"
-                                placeholder="Post Code"
+                                placeholder="รหัสไปรษณีย์"
                                 value={values.postCode}
                                 onChange={handleChange}
                                 isInvalid={!!errors.postCode}
@@ -537,11 +537,11 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             className="gi-register-wrap gi-register-btn"
                           >
                             <span>
-                              Already have an account?
-                              <a href="/login">Login</a>
+                              มีบัญชีอยู่แล้วใช่ไหม?
+                              <a href="/login">&nbsp;เข้าสู่ระบบ</a>
                             </span>
                             <button className="gi-btn-1" type="submit">
-                              Register
+                              สมัครสมาชิก
                             </button>
                           </span>
                         </Form>

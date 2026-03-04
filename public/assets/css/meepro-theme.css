@@ -26,6 +26,23 @@
    Override Grabit green (#5caf90) → MeePro orange
    ============================================= */
 
+/* Global Font override (Kanit) & Size */
+html, body {
+  font-size: 15px !important; 
+}
+
+body, h1, h2, h3, h4, h5, h6,
+p, a, li, button, input, textarea, select {
+  font-family: var(--font-kanit), 'Kanit', sans-serif !important;
+}
+
+/* Exempt icons from the Kanit override just in case */
+i[class*="fi"], i[class*="gicon"], i[class*="fa"],
+span[class*="fi"], span[class*="gicon"], span[class*="fa"], 
+.fi {
+  font-family: inherit !important;
+}
+
 /* Primary accent color overrides */
 .gi-header .gi-header-action .gi-header-btn a .gi-header-count,
 .gi-product .gi-pro-content .gi-pro-opt li a:hover,
@@ -146,13 +163,24 @@ a:hover,
    ============================================= */
 .gi-footer {
   background: var(--meepro-gray-dark) !important;
+  color: #E2E8F0 !important;
 }
 
 .gi-footer .footer-top {
   border-bottom: 1px solid rgba(255,255,255,0.1) !important;
 }
 
-.gi-footer a:hover {
+.gi-footer .gi-footer-detail,
+.gi-footer .gi-footer-heading,
+.gi-footer .gi-footer-link a,
+.gi-footer .gi-foo-location p,
+.gi-footer .gi-copy,
+.gi-footer .gi-copy a {
+  color: #FFFFFF !important;
+}
+
+.gi-footer a:hover,
+.gi-footer .gi-copy a:hover {
   color: var(--meepro-primary) !important;
 }
 

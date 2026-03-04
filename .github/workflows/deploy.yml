@@ -1,0 +1,29 @@
+name: Deploy to Production Server
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /path/to/your/project/folder/meepro-nextjs15
+            git pull origin main
+            
+            # Rebuild and restart the container
+            docker compose down
+            docker compose up -d --build
+            
+            # Clean up old unused images
+            docker image prune -af

@@ -63,9 +63,9 @@ const LoginPage = () => {
       const userData = { uid: foundUser.uid, email, password };
       localStorage.setItem("login_user", JSON.stringify(userData));
       dispatch(login(foundUser));
-      showSuccessToast("User Login Success");
+      showSuccessToast("เข้าสู่ระบบสำเร็จ");
     } else {
-      showErrorToast("Invalid email or password");
+      showErrorToast("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
     }
 
     setValidated(true);
@@ -73,14 +73,14 @@ const LoginPage = () => {
 
   return (
     <>
-      <Breadcrumb title={"Login Page"} />
+      <Breadcrumb title={"เข้าสู่ระบบ"} />
       <section className="gi-login padding-tb-40">
         <Container>
           <div className="section-title-2">
             <h2 className="gi-title">
-              Login<span></span>
+              เข้าสู่ระบบ<span></span>
             </h2>
-            <p>Get access to your Orders, Wishlist and Recommendations.</p>
+            <p>เข้าถึงรายการคำสั่งซื้อ สินค้าที่ชอบ และคำแนะนำสำหรับคุณ</p>
           </div>
           <div className="gi-login-content">
             <div className="gi-login-box">
@@ -94,18 +94,18 @@ const LoginPage = () => {
                       method="post"
                     >
                       <span className="gi-login-wrap">
-                        <label>Email Address*</label>
+                        <label>ที่อยู่อีเมล*</label>
                         <Form.Group>
                           <Form.Control
                             type="text"
                             name="name"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email add..."
+                            placeholder="กรอกอีเมลของคุณ..."
                             required
                           />
                           <Form.Control.Feedback type="invalid">
-                            Please Enter correct username.
+                            กรุณากรอกอีเมลให้ถูกต้อง
                           </Form.Control.Feedback>
                         </Form.Group>
                       </span>
@@ -114,7 +114,7 @@ const LoginPage = () => {
                         style={{ marginTop: "24px" }}
                         className="gi-login-wrap"
                       >
-                        <label>Password*</label>
+                        <label>รหัสผ่าน*</label>
                         <Form.Group>
                           <Form.Control
                             type="password"
@@ -122,24 +122,24 @@ const LoginPage = () => {
                             min={6}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
+                            placeholder="กรอกรหัสผ่านของคุณ"
                             required
                           />
                           <Form.Control.Feedback type="invalid">
-                            Password must be at least 6 characters
+                            รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร
                           </Form.Control.Feedback>
                         </Form.Group>
                       </span>
 
                       <span className="gi-login-wrap gi-login-fp">
                         <label>
-                          <Link href="/forgot-password">Forgot Password?</Link>
+                          <Link href="/forgot-password">ลืมรหัสผ่าน?</Link>
                         </label>
                       </span>
                       <span className="gi-login-wrap gi-login-btn">
                         <span>
                           <a href="/register" className="">
-                            Create Account?
+                            สร้างบัญชีใหม่?
                           </a>
                         </span>
                         <button
@@ -147,7 +147,7 @@ const LoginPage = () => {
                           className="gi-btn-1 btn"
                           type="submit"
                         >
-                          Login
+                          เข้าสู่ระบบ
                         </button>
                       </span>
                     </Form>
