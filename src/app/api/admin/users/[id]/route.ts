@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { execute, queryOne } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
-export async function PUT(request: Request, context: { params: { id: string } }) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;
     const body = await request.json();
@@ -36,7 +36,7 @@ export async function PUT(request: Request, context: { params: { id: string } })
   }
 }
 
-export async function DELETE(request: Request, context: { params: { id: string } }) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;
     const id = Number(params.id);

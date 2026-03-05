@@ -11,6 +11,11 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=mysql://root:pwD@20200@mariadb:3306/meepro_petshop
+      - DB_HOST=mariadb
+      - DB_USER=root
+      - DB_PASSWORD=pwD@20200
+      - DB_NAME=meepro_petshop
+      - NODE_ENV=production
     depends_on:
       - mariadb
     networks:

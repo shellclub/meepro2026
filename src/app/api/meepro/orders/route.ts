@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     }
 
     // Create or find customer
-    let existingCustomer = null;
+    let existingCustomer: any = null;
     if (customer.phone) {
       existingCustomer = await prisma.customer.findFirst({
         where: { phone: customer.phone },

@@ -4,15 +4,24 @@ const globalForDb = globalThis as unknown as {
   dbPool: mariadb.Pool | undefined;
 };
 
-export const pool =
-  globalForDb.dbPool ??
-  mariadb.createPool({
+const poolConfig = process.env.NODE_ENV === 'production' || !process.env.USE_XAMPP_SOCKET
+  ? {
+    host: 'mariadb',
+    port: 3306,
+    user: 'root',
+    password: 'pwD@20200',
+    database: 'meepro_petshop',
+    connectionLimit: 10,
+  }
+  : {
     socketPath: '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock',
     user: 'root',
     password: '',
     database: 'meepro_petshop',
     connectionLimit: 10,
-  });
+  };
+
+export const pool = globalForDb.dbPool ?? mariadb.createPool(poolConfig as any);
 
 if (process.env.NODE_ENV !== 'production') globalForDb.dbPool = pool;
 
@@ -58,4 +67,5 @@ export async function execute(sql: string, params?: any[]): Promise<any> {
   }
 }
 
-export default { pool, query, queryOne, execute };
+const db = { pool, query, queryOne, execute };
+export default db;
