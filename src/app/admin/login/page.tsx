@@ -259,7 +259,7 @@ export default function AdminLogin() {
       <div className="login-container">
         <div className="login-card">
           <div style={{ textAlign: "center" }}>
-            <span className="brand-logo">🐱</span>
+            <img src="/assets/img/logo/meepro-logo.png" alt="MeePro Logo" className="brand-logo" style={{ width: 80, height: 'auto' }} />
             <h1 className="login-title">MeePro Admin</h1>
             <p className="login-subtitle">ระบบจัดการร้านค้าหลังบ้าน</p>
           </div>
