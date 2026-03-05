@@ -19,8 +19,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@netlify/plugin-nextjs": "^5.9.4",
-    "@prisma/adapter-mariadb": "^7.4.2",
-    "@prisma/client": "^7.4.2",
+    "@prisma/client": "^6.4.1",
     "@reduxjs/toolkit": "^2.5.1",
     "apexcharts": "^4.4.0",
     "bcryptjs": "^3.0.3",
@@ -37,7 +36,7 @@
     "next-redux-wrapper": "^8.1.0",
     "nouislider": "^14.7.0",
     "nouislider-react": "^3.4.2",
-    "prisma": "^7.4.2",
+    "prisma": "^6.4.1",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",
     "react-awesome-reveal": "^4.3.1",

@@ -6,11 +6,11 @@ const globalForDb = globalThis as unknown as {
 
 const poolConfig = process.env.NODE_ENV === 'production' || !process.env.USE_XAMPP_SOCKET
   ? {
-    host: 'mariadb',
-    port: 3306,
-    user: 'root',
-    password: 'pwD@20200',
-    database: 'meepro_petshop',
+    host: process.env.DB_HOST || 'mariadb',
+    port: Number(process.env.DB_PORT) || 3306,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'pwD@20200',
+    database: process.env.DB_NAME || 'meepro_petshop',
     connectionLimit: 10,
   }
   : {

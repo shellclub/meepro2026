@@ -18,6 +18,8 @@ COPY . .
 
 # Environment variables must be present at build time
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_PUBLIC_URL ""
+ENV DATABASE_URL "mysql://placeholder:placeholder@localhost:3306/placeholder"
 
 RUN npx prisma generate
 RUN npm run build
