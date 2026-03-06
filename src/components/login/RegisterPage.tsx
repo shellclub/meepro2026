@@ -3,61 +3,41 @@ import { useEffect, useRef, useState } from "react";
 import Breadcrumb from "../breadcrumb/Breadcrumb";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import useSWR from "swr";
-import fetcher from "../fetcher-api/Fetcher";
-import Spinner from "../button/Spinner";
 import { Form } from "react-bootstrap";
 import * as formik from "formik";
 import * as yup from "yup";
 import { login } from "@/store/reducers/registrationSlice";
+import { provinces, getDistrictsByProvince, type Province, type District } from "@/utility/data/thai-address";
 
-interface Country {
-  id: string;
-  name: any;
-  iso2: string;
-}
-
-interface State {
-  id: string;
-  name: any;
-  state_code: string;
-}
-
-interface City {
-  id: string;
-  name: any;
-  iso2: string;
-}
-
-const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
+const RegisterPage = () => {
   const { Formik } = formik;
   const formikRef = useRef<any>(null);
 
   // Define Yup validation schema
   const schema = yup.object().shape({
-    firstName: yup.string().required("First name is required"),
-    lastName: yup.string().required("Last name is required"),
+    firstName: yup.string().required("กรุณากรอกชื่อ"),
+    lastName: yup.string().required("กรุณากรอกนามสกุล"),
     email: yup
       .string()
-      .email("Invalid email address")
-      .required("Email is required"),
+      .email("รูปแบบอีเมลไม่ถูกต้อง")
+      .required("กรุณากรอกอีเมล"),
     phoneNumber: yup
       .string()
-      .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
-      .required("Phone number is required"),
+      .matches(/^[0-9]{9,10}$/, "เบอร์โทรศัพท์ต้องเป็นตัวเลข 9-10 หลัก")
+      .required("กรุณากรอกเบอร์โทรศัพท์"),
+    address: yup.string().required("กรุณากรอกที่อยู่"),
+    province: yup.string().required("กรุณาเลือกจังหวัด"),
+    district: yup.string().required("กรุณาเลือกอำเภอ/เขต"),
+    subDistrict: yup.string().required("กรุณากรอกตำบล/แขวง"),
+    postCode: yup.string().matches(/^[0-9]{5}$/, "รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก").required("กรุณากรอกรหัสไปรษณีย์"),
     password: yup
       .string()
-      .min(6, "Password must be at least 6 characters")
-      .required("Password is required"),
+      .min(6, "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร")
+      .required("กรุณากรอกรหัสผ่าน"),
     confirmPassword: yup
       .string()
-      .required("Confirm password is required")
-      .oneOf([yup.ref("password")], "Passwords must match"),
-    address: yup.string().required("Address is required"),
-    country: yup.string().required("Country is required"),
-    state: yup.string().required("State is required"),
-    city: yup.string().required("City is required"),
-    postCode: yup.string().required("Post code is required"),
+      .required("กรุณายืนยันรหัสผ่าน")
+      .oneOf([yup.ref("password")], "รหัสผ่านไม่ตรงกัน"),
   });
 
   const initialValues = {
@@ -65,84 +45,33 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
     lastName: "",
     email: "",
     phoneNumber: "",
+    address: "",
+    province: "",
+    district: "",
+    subDistrict: "",
+    postCode: "",
     password: "",
     confirmPassword: "",
-    address: "",
-    country: "",
-    state: "",
-    city: "",
-    postCode: "",
   };
 
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const [filteredCountryData, setFilteredCountryData] = useState<Country[]>([]);
-  const [filteredStateData, setFilteredStateData] = useState<State[]>([]);
-  const [filteredCityData, setFilteredCityData] = useState<City[]>([]);
-  const [loadingStates, setLoadingStates] = useState(false);
-  const [loadingCities, setLoadingCities] = useState(false);
+  const [filteredDistricts, setFilteredDistricts] = useState<District[]>([]);
 
-  const {
-    data: country,
-    error,
-    isValidating,
-  } = useSWR("/api/country", fetcher, {
-    onSuccess,
-    onError,
-  });
+  const handleProvinceChange = (e: any, setFieldValue: any) => {
+    const provinceName = e.target.value;
+    setFieldValue("province", provinceName);
+    setFieldValue("district", "");
+    setFieldValue("subDistrict", "");
 
-  useEffect(() => {
-    if (country) {
-      setFilteredCountryData(
-        country.map((country: any) => ({
-          id: country.id,
-          countryName: country.name,
-          iso2: country.iso2,
-        }))
-      );
+    const province = provinces.find(p => p.name === provinceName);
+    if (province) {
+      const dists = getDistrictsByProvince(province.id);
+      setFilteredDistricts(dists);
+    } else {
+      setFilteredDistricts([]);
     }
-  }, [country]);
-
-  const handleCountryChange = async (e: any) => {
-    const { value } = e.target;
-
-    const formData = formikRef.current.values;
-
-    setLoadingStates(true);
-    const response = await fetcher(`/api/state`, {
-      country_code: value,
-      state: formData.state,
-    });
-    setLoadingStates(false);
-    setFilteredStateData(
-      response.map((state: any) => ({
-        id: state.id,
-        StateName: state.name,
-        state_code: state.state_code,
-      }))
-    );
-    setFilteredCityData([]);
-  };
-
-  const handleStateChange = async (e: any) => {
-    const { value } = e.target;
-
-    const formData = formikRef.current.values;
-
-    setLoadingCities(true);
-    const response = await fetcher(`/api/city`, {
-      states_code: value,
-      country_code: formData.country,
-    });
-    setLoadingCities(false);
-    setFilteredCityData(
-      response.map((city: any) => ({
-        id: city.id,
-        CityName: city.name,
-        iso2: city.iso2,
-      }))
-    );
   };
 
   const onSubmit = async (values: any) => {
@@ -171,9 +100,6 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
     }
   };
 
-  if (error) return <div>Error loading data</div>;
-  if (!country && isValidating) return <Spinner />;
-
   return (
     <>
       <Breadcrumb title={"สมัครสมาชิก"} />
@@ -198,14 +124,19 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                     {({
                       handleSubmit,
                       handleChange,
+                      setFieldValue,
                       values,
                       touched,
                       errors,
                     }) => (
                       <>
                         <Form noValidate onSubmit={handleSubmit}>
+                          {/* ===== ข้อมูลส่วนตัว ===== */}
+                          <h5 style={{ fontWeight: "600", color: "#1e293b", marginBottom: "15px", paddingBottom: "8px", borderBottom: "2px solid #F28C28" }}>
+                            ข้อมูลส่วนตัว
+                          </h5>
                           <span className="gi-register-wrap gi-register-half">
-                            <label htmlFor="firstname">ชื่อ*</label>
+                            <label htmlFor="firstname">ชื่อ *</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
@@ -213,10 +144,11 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                                 placeholder="กรอกชื่อของคุณ"
                                 value={values.firstName}
                                 onChange={handleChange}
-                                isInvalid={!!errors.firstName}
+                                isInvalid={!!errors.firstName && !!touched.firstName}
                                 required
                               />
                               {errors.firstName &&
+                                touched.firstName &&
                                 typeof errors.firstName === "string" && (
                                   <Form.Control.Feedback type="invalid">
                                     {errors.firstName}
@@ -225,7 +157,7 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             </Form.Group>
                           </span>
                           <span className="gi-register-wrap gi-register-half">
-                            <label>นามสกุล*</label>
+                            <label>นามสกุล *</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
@@ -234,9 +166,10 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                                 required
                                 value={values.lastName}
                                 onChange={handleChange}
-                                isInvalid={!!errors.lastName}
+                                isInvalid={!!errors.lastName && !!touched.lastName}
                               />
                               {errors.lastName &&
+                                touched.lastName &&
                                 typeof errors.lastName === "string" && (
                                   <Form.Control.Feedback type="invalid">
                                     {errors.lastName}
@@ -248,18 +181,19 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>อีเมล*</label>
+                            <label>อีเมล *</label>
                             <Form.Group>
                               <Form.Control
                                 type="email"
                                 name="email"
-                                placeholder="กรอกอีเมลของคุณ..."
+                                placeholder="กรอกอีเมลของคุณ"
                                 required
                                 value={values.email}
                                 onChange={handleChange}
-                                isInvalid={!!errors.email}
+                                isInvalid={!!errors.email && !!touched.email}
                               />
                               {errors.email &&
+                                touched.email &&
                                 typeof errors.email === "string" && (
                                   <Form.Control.Feedback type="invalid">
                                     {errors.email}
@@ -271,19 +205,19 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>เบอร์โทรศัพท์*</label>
+                            <label>เบอร์โทรศัพท์ *</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
                                 name="phoneNumber"
                                 placeholder="กรอกเบอร์โทรศัพท์"
-                                pattern="^\d{10,12}$"
                                 required
                                 value={values.phoneNumber}
                                 onChange={handleChange}
-                                isInvalid={!!errors.phoneNumber}
+                                isInvalid={!!errors.phoneNumber && !!touched.phoneNumber}
                               />
                               {errors.phoneNumber &&
+                                touched.phoneNumber &&
                                 typeof errors.phoneNumber === "string" && (
                                   <Form.Control.Feedback type="invalid">
                                     {errors.phoneNumber}
@@ -291,70 +225,27 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                                 )}
                             </Form.Group>
                           </span>
+
+                          {/* ===== ที่อยู่ ===== */}
+                          <h5 style={{ fontWeight: "600", color: "#1e293b", marginTop: "25px", marginBottom: "15px", paddingBottom: "8px", borderBottom: "2px solid #F28C28" }}>
+                            ที่อยู่
+                          </h5>
                           <span
-                            style={{ marginTop: "10px" }}
-                            className="gi-register-wrap gi-register-half"
-                          >
-                            <label>รหัสผ่าน*</label>
-                            <Form.Group>
-                              <Form.Control
-                                type="password"
-                                name="password"
-                                placeholder="กรอกรหัสผ่าน"
-                                pattern="^\d{6,12}$"
-                                required
-                                value={values.password}
-                                onChange={handleChange}
-                                isInvalid={!!errors.password}
-                              />
-                              {errors.password &&
-                                typeof errors.password === "string" && (
-                                  <Form.Control.Feedback type="invalid">
-                                    {errors.password}
-                                  </Form.Control.Feedback>
-                                )}
-                            </Form.Group>
-                          </span>
-                          <span
-                            style={{ marginTop: "10px" }}
-                            className="gi-register-wrap gi-register-half"
-                          >
-                            <label>ยืนยันรหัสผ่าน*</label>
-                            <Form.Group>
-                              <Form.Control
-                                type="password"
-                                name="confirmPassword"
-                                placeholder="กรอกยืนยันรหัสผ่าน"
-                                pattern="^\d{6,12}$"
-                                required
-                                value={values.confirmPassword}
-                                onChange={handleChange}
-                                isInvalid={!!errors.confirmPassword}
-                              />
-                              {errors.confirmPassword &&
-                                typeof errors.confirmPassword === "string" && (
-                                  <Form.Control.Feedback type="invalid">
-                                    {errors.confirmPassword}
-                                  </Form.Control.Feedback>
-                                )}
-                            </Form.Group>
-                          </span>
-                          <span
-                            style={{ marginTop: "10px" }}
                             className="gi-register-wrap"
                           >
-                            <label>ที่อยู่</label>
+                            <label>ที่อยู่ (บ้านเลขที่ หมู่ ซอย ถนน) *</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
                                 name="address"
-                                placeholder="ที่อยู่"
+                                placeholder="เช่น 123/4 หมู่ 5 ซอยสุขสวัสดิ์ 1 ถนนสุขสวัสดิ์"
                                 value={values.address}
                                 onChange={handleChange}
-                                isInvalid={!!errors.address}
+                                isInvalid={!!errors.address && !!touched.address}
                                 required
                               />
                               {errors.address &&
+                                touched.address &&
                                 typeof errors.address === "string" && (
                                   <Form.Control.Feedback type="invalid">
                                     {errors.address}
@@ -366,41 +257,38 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>ประเทศ *</label>
+                            <label>จังหวัด *</label>
                             <Form.Group
                               className={`gi-rg-select-inner  ${
-                                !!errors.country ? "is-invalid" : ""
+                                !!errors.province && !!touched.province ? "is-invalid" : ""
                               }`}
                             >
                               <Form.Select
                                 size="sm"
-                                name="country"
-                                id="gi-select-country"
+                                name="province"
                                 className="gi-register-select"
-                                value={values.country || ""}
+                                value={values.province || ""}
                                 onChange={(e) => {
-                                  handleChange(e);
-                                  handleCountryChange(e);
+                                  handleProvinceChange(e, setFieldValue);
                                 }}
                                 required
-                                isInvalid={!!errors.country}
+                                isInvalid={!!errors.province && !!touched.province}
                               >
                                 <option value="" disabled>
-                                  ประเทศ
+                                  -- เลือกจังหวัด --
                                 </option>
-                                {filteredCountryData.map(
-                                  (country: any, index) => (
-                                    <option key={index} value={country.iso2}>
-                                      {country.countryName}
-                                    </option>
-                                  )
-                                )}
+                                {provinces.map((prov) => (
+                                  <option key={prov.id} value={prov.name}>
+                                    {prov.name}
+                                  </option>
+                                ))}
                               </Form.Select>
                             </Form.Group>
-                            {errors.country &&
-                              typeof errors.country === "string" && (
-                                <Form.Control.Feedback type="invalid">
-                                  {errors.country}
+                            {errors.province &&
+                              touched.province &&
+                              typeof errors.province === "string" && (
+                                <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+                                  {errors.province}
                                 </Form.Control.Feedback>
                               )}
                           </span>
@@ -409,107 +297,82 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>รัฐ/จังหวัด</label>
+                            <label>อำเภอ/เขต *</label>
                             <Form.Group
                               className={`gi-rg-select-inner  ${
-                                !!errors.state ? "is-invalid" : ""
+                                !!errors.district && !!touched.district ? "is-invalid" : ""
                               }`}
                             >
                               <Form.Select
                                 size="sm"
-                                name="state"
-                                id="gi-select-state"
+                                name="district"
                                 className="gi-register-select"
-                                value={values.state || ""}
-                                onChange={(e) => {
-                                  handleChange(e);
-                                  handleStateChange(e);
-                                }}
-                                required
-                                isInvalid={!!errors.state}
-                              >
-                                <option value="" disabled>
-                                  รัฐ/จังหวัด
-                                </option>
-                                {loadingStates ? (
-                                  <option disabled>กำลังโหลด...</option>
-                                ) : (
-                                  filteredStateData.map((state: any, index) => (
-                                    <option
-                                      key={index}
-                                      value={state.state_code}
-                                    >
-                                      {state.StateName}
-                                    </option>
-                                  ))
-                                )}
-                              </Form.Select>
-                            </Form.Group>
-                            {errors.state &&
-                              typeof errors.state === "string" && (
-                                <Form.Control.Feedback type="invalid">
-                                  {errors.state}
-                                </Form.Control.Feedback>
-                              )}
-                          </span>
-
-                          <span
-                            style={{ marginTop: "10px" }}
-                            className="gi-register-wrap gi-register-half"
-                          >
-                            <label>เมือง/อำเภอ *</label>
-                            <Form.Group
-                              className={`gi-rg-select-inner  ${
-                                !!errors.city ? "is-invalid" : ""
-                              }`}
-                            >
-                              <Form.Select
-                                size="sm"
-                                name="city"
-                                id="gi-select-city"
-                                className="gi-register-select"
-                                value={values.city || ""}
+                                value={values.district || ""}
                                 onChange={handleChange}
-                                isInvalid={!!errors.city}
                                 required
+                                isInvalid={!!errors.district && !!touched.district}
                               >
                                 <option value="" disabled>
-                                  เมือง/อำเภอ
+                                  -- เลือกอำเภอ/เขต --
                                 </option>
-                                {loadingCities ? (
-                                  <option disabled>กำลังโหลด...</option>
-                                ) : (
-                                  filteredCityData.map((city: any, index) => (
-                                    <option key={index} value={city.iso2}>
-                                      {city.CityName}
-                                    </option>
-                                  ))
-                                )}
+                                {filteredDistricts.map((dist) => (
+                                  <option key={dist.id} value={dist.name}>
+                                    {dist.name}
+                                  </option>
+                                ))}
                               </Form.Select>
                             </Form.Group>
-                            {errors.city && typeof errors.city === "string" && (
-                              <Form.Control.Feedback type="invalid">
-                                {errors.city}
-                              </Form.Control.Feedback>
-                            )}
+                            {errors.district &&
+                              touched.district &&
+                              typeof errors.district === "string" && (
+                                <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+                                  {errors.district}
+                                </Form.Control.Feedback>
+                              )}
+                          </span>
+
+                          <span
+                            style={{ marginTop: "10px" }}
+                            className="gi-register-wrap gi-register-half"
+                          >
+                            <label>ตำบล/แขวง *</label>
+                            <Form.Group>
+                              <Form.Control
+                                type="text"
+                                name="subDistrict"
+                                placeholder="กรอกตำบล/แขวง"
+                                value={values.subDistrict}
+                                onChange={handleChange}
+                                isInvalid={!!errors.subDistrict && !!touched.subDistrict}
+                                required
+                              />
+                              {errors.subDistrict &&
+                                touched.subDistrict &&
+                                typeof errors.subDistrict === "string" && (
+                                  <Form.Control.Feedback type="invalid">
+                                    {errors.subDistrict}
+                                  </Form.Control.Feedback>
+                                )}
+                            </Form.Group>
                           </span>
                           <span
                             style={{ marginTop: "10px" }}
                             className="gi-register-wrap gi-register-half"
                           >
-                            <label>รหัสไปรษณีย์</label>
+                            <label>รหัสไปรษณีย์ *</label>
                             <Form.Group>
                               <Form.Control
                                 type="text"
                                 name="postCode"
-                                pattern="^\d{5,6}$"
-                                placeholder="รหัสไปรษณีย์"
+                                placeholder="รหัสไปรษณีย์ 5 หลัก"
                                 value={values.postCode}
                                 onChange={handleChange}
-                                isInvalid={!!errors.postCode}
+                                isInvalid={!!errors.postCode && !!touched.postCode}
                                 required
+                                maxLength={5}
                               />
                               {errors.postCode &&
+                                touched.postCode &&
                                 typeof errors.postCode === "string" && (
                                   <Form.Control.Feedback type="invalid">
                                     {errors.postCode}
@@ -517,23 +380,60 @@ const RegisterPage = ({ onSuccess = () => {}, onError = () => {} }) => {
                                 )}
                             </Form.Group>
                           </span>
-                          <span className="gi-register-wrap gi-recaptcha">
-                            <span
-                              className="g-recaptcha"
-                              data-sitekey="6LfKURIUAAAAAO50vlwWZkyK_G2ywqE52NU7YO0S"
-                              data-callback="verifyRecaptchaCallback"
-                              data-expired-callback="expiredRecaptchaCallback"
-                            ></span>
-                            <input
-                              className="form-control d-none"
-                              data-recaptcha="true"
-                              required
-                              data-error="Please complete the Captcha"
-                            />
-                            <span className="help-block with-errors"></span>
+
+                          {/* ===== ข้อมูลผู้ใช้ (รหัสผ่าน) ===== */}
+                          <h5 style={{ fontWeight: "600", color: "#1e293b", marginTop: "25px", marginBottom: "15px", paddingBottom: "8px", borderBottom: "2px solid #F28C28" }}>
+                            ข้อมูลผู้ใช้
+                          </h5>
+                          <span
+                            className="gi-register-wrap gi-register-half"
+                          >
+                            <label>รหัสผ่าน *</label>
+                            <Form.Group>
+                              <Form.Control
+                                type="password"
+                                name="password"
+                                placeholder="กรอกรหัสผ่าน (อย่างน้อย 6 ตัวอักษร)"
+                                required
+                                value={values.password}
+                                onChange={handleChange}
+                                isInvalid={!!errors.password && !!touched.password}
+                              />
+                              {errors.password &&
+                                touched.password &&
+                                typeof errors.password === "string" && (
+                                  <Form.Control.Feedback type="invalid">
+                                    {errors.password}
+                                  </Form.Control.Feedback>
+                                )}
+                            </Form.Group>
                           </span>
                           <span
-                            style={{ marginTop: "10px" }}
+                            className="gi-register-wrap gi-register-half"
+                          >
+                            <label>ยืนยันรหัสผ่าน *</label>
+                            <Form.Group>
+                              <Form.Control
+                                type="password"
+                                name="confirmPassword"
+                                placeholder="กรอกยืนยันรหัสผ่าน"
+                                required
+                                value={values.confirmPassword}
+                                onChange={handleChange}
+                                isInvalid={!!errors.confirmPassword && !!touched.confirmPassword}
+                              />
+                              {errors.confirmPassword &&
+                                touched.confirmPassword &&
+                                typeof errors.confirmPassword === "string" && (
+                                  <Form.Control.Feedback type="invalid">
+                                    {errors.confirmPassword}
+                                  </Form.Control.Feedback>
+                                )}
+                            </Form.Group>
+                          </span>
+
+                          <span
+                            style={{ marginTop: "15px" }}
                             className="gi-register-wrap gi-register-btn"
                           >
                             <span>
