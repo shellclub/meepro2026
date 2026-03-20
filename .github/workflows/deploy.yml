@@ -28,6 +28,22 @@ jobs:
             docker compose down
             docker compose up -d --build
             
+            # Wait for app to start
+            echo "Waiting 20 seconds for app to start..."
+            sleep 20
+            
+            # Check container status
+            echo "=== Container Status ==="
+            docker compose ps
+            
+            # Show recent logs
+            echo "=== App Logs (last 50 lines) ==="
+            docker compose logs --tail=50 app
+            
+            # Check if port 3000 is responding
+            echo "=== Health Check ==="
+            curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:3000/ || echo "App is not responding on port 3000"
+            
             # Clean up old unused images (don't fail if prune errors)
             docker image prune -af || true
             
