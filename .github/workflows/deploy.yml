@@ -24,9 +24,15 @@ jobs:
             cd /root/meepro2026
             git pull origin main
             
+            # Create shared network for nginx proxy manager (if not exists)
+            docker network create nginx-proxy-net || true
+            
             # Rebuild and restart the container
             docker compose down
             docker compose up -d --build
+            
+            # Connect nginx_proxy_manager to the shared network (if not already connected)
+            docker network connect nginx-proxy-net nginx_proxy_manager || true
             
             # Wait for app to start
             echo "Waiting 20 seconds for app to start..."
