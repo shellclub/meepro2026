@@ -8,3 +8,4 @@ node_modules
 .env.development
 npm-debug.log*
 .DS_Store
+src/utility/json/cities.json

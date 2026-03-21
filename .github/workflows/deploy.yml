@@ -21,36 +21,56 @@ jobs:
           command_timeout: 30m
           script_stop: false
           script: |
+            set -e
             cd /root/meepro2026
+            echo "=== Git Pull ==="
             git pull origin main
             
             # Create shared network for nginx proxy manager (if not exists)
-            docker network create nginx-proxy-net || true
+            docker network create nginx-proxy-net 2>/dev/null || true
             
             # Rebuild and restart the container
+            echo "=== Docker Build & Start ==="
             docker compose down
-            docker compose up -d --build
+            docker compose up -d --build 2>&1
+            BUILD_EXIT=$?
+            
+            if [ $BUILD_EXIT -ne 0 ]; then
+              echo "ERROR: Docker build failed with exit code $BUILD_EXIT"
+              echo "=== Docker Build Logs ==="
+              docker compose logs --tail=100
+              exit 1
+            fi
             
             # Connect nginx_proxy_manager to the shared network (if not already connected)
-            docker network connect nginx-proxy-net nginx_proxy_manager || true
+            docker network connect nginx-proxy-net nginx_proxy_manager 2>/dev/null || true
             
             # Wait for app to start
-            echo "Waiting 20 seconds for app to start..."
-            sleep 20
+            echo "Waiting 30 seconds for app to start..."
+            sleep 30
             
             # Check container status
             echo "=== Container Status ==="
             docker compose ps
             
             # Show recent logs
-            echo "=== App Logs (last 50 lines) ==="
-            docker compose logs --tail=50 app
+            echo "=== App Logs (last 80 lines) ==="
+            docker compose logs --tail=80 app
             
             # Check if port 3000 is responding
             echo "=== Health Check ==="
-            curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:3000/ || echo "App is not responding on port 3000"
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ 2>/dev/null || echo "000")
+            echo "HTTP Status: $HTTP_STATUS"
+            
+            if [ "$HTTP_STATUS" = "000" ]; then
+              echo "WARNING: App is not responding on port 3000!"
+              echo "=== Full Container Logs ==="
+              docker compose logs app
+            else
+              echo "App is running! HTTP Status: $HTTP_STATUS"
+            fi
             
             # Clean up old unused images (don't fail if prune errors)
-            docker image prune -af || true
+            docker image prune -af 2>/dev/null || true
             
-            echo "Deploy completed successfully!"
+            echo "Deploy completed!"
