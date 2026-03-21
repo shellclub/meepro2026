@@ -221,11 +221,90 @@ export default function AdminProductEdit({ params }: { params: Promise<{ id: str
             <button type="button" onClick={addImage} style={{ padding: "6px 12px", background: "#eff6ff", color: "#2563eb", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>➕ เพิ่มรูป</button>
           </div>
           {form.images.map((img, i) => (
-            <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px", alignItems: "center" }}>
-              <input style={{ ...inputStyle, flex: 1 }} value={img.url} onChange={(e) => { const imgs = [...form.images]; imgs[i].url = e.target.value; setForm({ ...form, images: imgs }); }} placeholder="URL รูปภาพ" />
-              <input style={{ ...inputStyle, width: "150px" }} value={img.alt} onChange={(e) => { const imgs = [...form.images]; imgs[i].alt = e.target.value; setForm({ ...form, images: imgs }); }} placeholder="Alt text" />
-              {img.url && <img src={img.url} alt="" style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "6px", border: "1px solid #e2e8f0" }} />}
-              {form.images.length > 1 && <button type="button" onClick={() => removeImage(i)} style={{ padding: "8px", background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "6px", cursor: "pointer" }}>✕</button>}
+            <div key={i} style={{ border: "1px solid #e2e8f0", borderRadius: "10px", padding: "16px", marginBottom: "12px", background: "#fafbfc" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <div style={{ display: "flex", gap: "0" }}>
+                  <button type="button" onClick={() => { const imgs = [...form.images]; (imgs[i] as any)._mode = "url"; setForm({ ...form, images: imgs }); }}
+                    style={{ padding: "6px 14px", fontSize: "12px", fontWeight: "600", border: "1px solid #d1d5db", borderRadius: "6px 0 0 6px", cursor: "pointer", background: (img as any)._mode !== "upload" ? "#2563eb" : "#fff", color: (img as any)._mode !== "upload" ? "#fff" : "#374151" }}>
+                    🔗 URL
+                  </button>
+                  <button type="button" onClick={() => { const imgs = [...form.images]; (imgs[i] as any)._mode = "upload"; setForm({ ...form, images: imgs }); }}
+                    style={{ padding: "6px 14px", fontSize: "12px", fontWeight: "600", border: "1px solid #d1d5db", borderLeft: "none", borderRadius: "0 6px 6px 0", cursor: "pointer", background: (img as any)._mode === "upload" ? "#2563eb" : "#fff", color: (img as any)._mode === "upload" ? "#fff" : "#374151" }}>
+                    📤 อัพโหลด
+                  </button>
+                </div>
+                {form.images.length > 1 && <button type="button" onClick={() => removeImage(i)} style={{ padding: "6px 10px", background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "12px" }}>✕ ลบ</button>}
+              </div>
+
+              {(img as any)._mode !== "upload" ? (
+                /* URL Mode */
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <input style={{ ...inputStyle, flex: 1 }} value={img.url} onChange={(e) => { const imgs = [...form.images]; imgs[i].url = e.target.value; setForm({ ...form, images: imgs }); }} placeholder="https://example.com/image.jpg" />
+                  <input style={{ ...inputStyle, width: "140px" }} value={img.alt} onChange={(e) => { const imgs = [...form.images]; imgs[i].alt = e.target.value; setForm({ ...form, images: imgs }); }} placeholder="Alt text" />
+                </div>
+              ) : (
+                /* Upload Mode */
+                <div>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#eff6ff"; }}
+                    onDragLeave={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.background = "#fff"; }}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = "#d1d5db";
+                      e.currentTarget.style.background = "#fff";
+                      const file = e.dataTransfer.files[0];
+                      if (!file) return;
+                      const fd = new FormData();
+                      fd.append("files", file);
+                      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+                      const data = await res.json();
+                      if (data.success && data.files?.[0]) {
+                        const imgs = [...form.images];
+                        imgs[i].url = data.files[0].url;
+                        if (!imgs[i].alt) imgs[i].alt = file.name.replace(/\.[^/.]+$/, "");
+                        setForm({ ...form, images: imgs });
+                      } else {
+                        alert(data.error || "อัพโหลดล้มเหลว");
+                      }
+                    }}
+                    style={{ border: "2px dashed #d1d5db", borderRadius: "8px", padding: "24px", textAlign: "center", cursor: "pointer", background: "#fff", transition: "all 0.2s" }}
+                    onClick={() => document.getElementById(`file-input-edit-${i}`)?.click()}
+                  >
+                    <div style={{ fontSize: "28px", marginBottom: "8px" }}>📁</div>
+                    <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#374151", fontWeight: "500" }}>คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+                    <p style={{ margin: 0, fontSize: "11px", color: "#94a3b8" }}>รองรับ JPG, PNG, WebP, GIF (ไม่เกิน 5MB)</p>
+                  </div>
+                  <input id={`file-input-edit-${i}`} type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: "none" }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const fd = new FormData();
+                      fd.append("files", file);
+                      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+                      const data = await res.json();
+                      if (data.success && data.files?.[0]) {
+                        const imgs = [...form.images];
+                        imgs[i].url = data.files[0].url;
+                        if (!imgs[i].alt) imgs[i].alt = file.name.replace(/\.[^/.]+$/, "");
+                        setForm({ ...form, images: imgs });
+                      } else {
+                        alert(data.error || "อัพโหลดล้มเหลว");
+                      }
+                    }}
+                  />
+                  <div style={{ marginTop: "8px" }}>
+                    <input style={{ ...inputStyle, width: "100%" }} value={img.alt} onChange={(e) => { const imgs = [...form.images]; imgs[i].alt = e.target.value; setForm({ ...form, images: imgs }); }} placeholder="Alt text (คำอธิบายรูป)" />
+                  </div>
+                </div>
+              )}
+
+              {/* Preview */}
+              {img.url && (
+                <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "10px" }}>
+                  <img src={img.url} alt={img.alt || ""} style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px", border: "1px solid #e2e8f0" }} />
+                  <span style={{ fontSize: "12px", color: "#64748b", wordBreak: "break-all" }}>{img.url}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>

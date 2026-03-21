@@ -19,6 +19,8 @@ services:
       - NEXT_PUBLIC_URL=
     depends_on:
       - mariadb
+    volumes:
+      - meepro_uploads:/app/public/uploads
     networks:
       - meepro-net
       - nginx-proxy-net
@@ -41,6 +43,7 @@ services:
 
 volumes:
   meepro_db_data:
+  meepro_uploads:
 
 networks:
   meepro-net:
