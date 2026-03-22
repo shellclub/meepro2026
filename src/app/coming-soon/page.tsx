@@ -4,38 +4,13 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function ComingSoonPage() {
-  // Countdown to a target date (e.g., 30 days from now or a fixed date)
-  const targetDate = new Date('2026-05-01T00:00:00+07:00').getTime();
-
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const diff = targetDate - now;
-
-      if (diff > 0) {
-        setTimeLeft({
-          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((diff % (1000 * 60)) / 1000),
-        });
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [targetDate]);
+  }, []);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,36 +91,7 @@ export default function ComingSoonPage() {
           </p>
         </div>
 
-        {/* Countdown */}
-        <div className="cs-countdown">
-          <div className="cs-countdown-item">
-            <div className="cs-countdown-card">
-              <span className="cs-countdown-number">{String(timeLeft.days).padStart(2, '0')}</span>
-            </div>
-            <span className="cs-countdown-label">วัน</span>
-          </div>
-          <div className="cs-countdown-separator">:</div>
-          <div className="cs-countdown-item">
-            <div className="cs-countdown-card">
-              <span className="cs-countdown-number">{String(timeLeft.hours).padStart(2, '0')}</span>
-            </div>
-            <span className="cs-countdown-label">ชั่วโมง</span>
-          </div>
-          <div className="cs-countdown-separator">:</div>
-          <div className="cs-countdown-item">
-            <div className="cs-countdown-card">
-              <span className="cs-countdown-number">{String(timeLeft.minutes).padStart(2, '0')}</span>
-            </div>
-            <span className="cs-countdown-label">นาที</span>
-          </div>
-          <div className="cs-countdown-separator">:</div>
-          <div className="cs-countdown-item">
-            <div className="cs-countdown-card">
-              <span className="cs-countdown-number">{String(timeLeft.seconds).padStart(2, '0')}</span>
-            </div>
-            <span className="cs-countdown-label">วินาที</span>
-          </div>
-        </div>
+
 
         {/* Email Subscription */}
         <div className="cs-subscribe">
@@ -199,13 +145,13 @@ export default function ComingSoonPage() {
         <div className="cs-contact">
           <h3 className="cs-contact-title">📞 ติดต่อเรา</h3>
           <div className="cs-contact-grid">
-            <a href="tel:0812345678" className="cs-contact-item">
+            <a href="tel:0866004774" className="cs-contact-item">
               <div className="cs-contact-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
               </div>
-              <span>081-234-5678</span>
+              <span>086-600-4774</span>
             </a>
             <a href="https://line.me/ti/p/meepro" target="_blank" rel="noopener noreferrer" className="cs-contact-item">
               <div className="cs-contact-icon cs-contact-icon-line">
@@ -215,22 +161,22 @@ export default function ComingSoonPage() {
               </div>
               <span>@meepro</span>
             </a>
-            <a href="https://www.facebook.com/meepro" target="_blank" rel="noopener noreferrer" className="cs-contact-item">
+            <a href="https://www.facebook.com/MeePROpetshop" target="_blank" rel="noopener noreferrer" className="cs-contact-item">
               <div className="cs-contact-icon cs-contact-icon-fb">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                 </svg>
               </div>
-              <span>MeePro Pet Shop</span>
+              <span>MeePROpetshop</span>
             </a>
-            <a href="mailto:contact@meepro.shop" className="cs-contact-item">
+            <a href="mailto:meepro2024@gmail.com" className="cs-contact-item">
               <div className="cs-contact-icon cs-contact-icon-email">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="2" y="4" width="20" height="16" rx="2" />
                   <path d="M22 7l-10 7L2 7" />
                 </svg>
               </div>
-              <span>contact@meepro.shop</span>
+              <span>meepro2024@gmail.com</span>
             </a>
           </div>
         </div>
