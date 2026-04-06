@@ -234,6 +234,8 @@ function CategoriesSection() {
 // ==========================================
 function ProductCard({ product }: { product: any }) {
   const dispatch = useDispatch();
+  const [showToast, setShowToast] = useState(false);
+  const [btnAnimate, setBtnAnimate] = useState(false);
   const mainImage = product.images?.[0]?.url || "/assets/img/product-images/1_1.jpg";
   const hoverImage = product.images?.[1]?.url || mainImage;
 
@@ -257,6 +259,11 @@ function ProductCard({ product }: { product: any }) {
         category: product.category?.name || "",
       })
     );
+    // Trigger animations
+    setBtnAnimate(true);
+    setShowToast(true);
+    setTimeout(() => setBtnAnimate(false), 400);
+    setTimeout(() => setShowToast(false), 2200);
   };
 
   const discount = product.comparePrice
@@ -264,7 +271,33 @@ function ProductCard({ product }: { product: any }) {
     : 0;
 
   return (
-    <div className="gi-product" style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #f0f0f0" }}>
+    <div className="gi-product" style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #f0f0f0", position: "relative" }}>
+      {/* Toast notification */}
+      {showToast && (
+        <div style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "rgba(34, 34, 34, 0.92)",
+          color: "#fff",
+          padding: "12px 20px",
+          borderRadius: "12px",
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          fontSize: "13px",
+          fontWeight: "500",
+          backdropFilter: "blur(8px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+          animation: "toastPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          whiteSpace: "nowrap",
+        }}>
+          <span style={{ fontSize: "18px" }}>✅</span>
+          เพิ่มลงตะกร้าแล้ว
+        </div>
+      )}
       <div className="gi-pro-image" style={{ position: "relative", overflow: "hidden" }}>
         {discount > 0 && (
           <span
@@ -320,7 +353,7 @@ function ProductCard({ product }: { product: any }) {
           <button
             onClick={handleAddToCart}
             style={{
-              background: "#F28C28",
+              background: btnAnimate ? "#e07a1f" : "#F28C28",
               color: "#fff",
               border: "none",
               borderRadius: "50%",
@@ -332,11 +365,12 @@ function ProductCard({ product }: { product: any }) {
               cursor: "pointer",
               fontSize: "16px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-              transition: "all 0.3s ease",
+              transition: "all 0.2s ease",
+              transform: btnAnimate ? "scale(1.3)" : "scale(1)",
             }}
             title="เพิ่มลงตะกร้า"
           >
-            🛒
+            {btnAnimate ? "✓" : "🛒"}
           </button>
         </div>
       </div>
@@ -577,6 +611,13 @@ function ServicesSection() {
 export default function MeeProHomePage() {
   return (
     <>
+      <style>{`
+        @keyframes toastPop {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+          60% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+      `}</style>
       <HeroSlider />
       <CategoriesSection />
       <FeaturedProducts />

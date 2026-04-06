@@ -25,62 +25,7 @@ export interface CounterState {
   isSwitchOn: boolean;
 }
 
-const defaultItems: Item[] = [
-  {
-    id: 1,
-    title: "Women's wallet Hand Purse",
-    image: process.env.NEXT_PUBLIC_URL + "/assets/img/product-images/48_1.jpg",
-    imageTwo:
-      process.env.NEXT_PUBLIC_URL + "/assets/img/product-images/48_1.jpg",
-    newPrice: 50.0,
-    oldPrice: 70.0,
-    date: "",
-    rating: 3,
-    status: "Available",
-    waight: "1 pcs",
-    location: "in Store",
-    brand: "Darsh Mart",
-    sku: 12332,
-    category: "",
-    quantity: 1,
-  },
-  {
-    id: 2,
-    title: "Rose Gold Earring",
-    date: "",
-    image: process.env.NEXT_PUBLIC_URL + "/assets/img/product-images/53_1.jpg",
-    imageTwo:
-      process.env.NEXT_PUBLIC_URL + "/assets/img/product-images/53_1.jpg",
-    rating: 4,
-    newPrice: 60.0,
-    oldPrice: 80.0,
-    status: "Out Of Stock",
-    waight: "200g Pack",
-    location: "Online",
-    brand: "Bhisma Organice",
-    sku: 64532,
-    category: "",
-    quantity: 1,
-  },
-  {
-    id: 161,
-    title: "Apple",
-    image: process.env.NEXT_PUBLIC_URL + "/assets/img/product-images/21_1.jpg",
-    imageTwo:
-      process.env.NEXT_PUBLIC_URL + "/assets/img/product-images/21_1.jpg",
-    newPrice: 10.0,
-    oldPrice: 12.0,
-    date: "",
-    waight: "5 pcs",
-    rating: 2,
-    status: "Available",
-    location: "in Store, Online",
-    brand: "Peoples Store",
-    sku: 23445,
-    category: "",
-    quantity: 1,
-  },
-];
+const defaultItems: Item[] = [];
 
 const defaultOrders: object[] = [
   {
@@ -325,8 +270,44 @@ const defaultOrders: object[] = [
   },
 ];
 
+// Helper: merge duplicate items (same id + title) by summing quantity
+function mergeDuplicateItems(items: Item[]): Item[] {
+  const map = new Map<string, Item>();
+  for (const item of items) {
+    const key = `${item.id}__${item.title}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      map.set(key, { ...item });
+    }
+  }
+  return Array.from(map.values());
+}
+
+// Load and merge cart items from localStorage
+function getInitialCartItems(): Item[] {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("products");
+      if (stored) {
+        const parsed = JSON.parse(stored) as Item[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const merged = mergeDuplicateItems(parsed);
+          // Save merged version back
+          localStorage.setItem("products", JSON.stringify(merged));
+          return merged;
+        }
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+  }
+  return defaultItems;
+}
+
 const initialState: CounterState = {
-  items: defaultItems,
+  items: getInitialCartItems(),
   orders: defaultOrders,
   isSwitchOn:
     typeof window !== "undefined"
@@ -342,7 +323,15 @@ export const cartSlice = createSlice({
       state.items = action.payload;
     },
     addItem(state, action: PayloadAction<Item>) {
-      state.items.push(action.payload);
+      // Check if same product (by id + title for variant support) already exists
+      const existing = state.items.find(
+        (item) => item.id === action.payload.id && item.title === action.payload.title
+      );
+      if (existing) {
+        existing.quantity += action.payload.quantity;
+      } else {
+        state.items.push(action.payload);
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("products", JSON.stringify(state.items));
       }

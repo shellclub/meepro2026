@@ -15,6 +15,8 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
+  const [showToast, setShowToast] = useState(false);
+  const [btnAnimate, setBtnAnimate] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -55,6 +57,10 @@ export default function ProductDetailPage() {
         category: product.category?.name || "",
       })
     );
+    setBtnAnimate(true);
+    setShowToast(true);
+    setTimeout(() => setBtnAnimate(false), 500);
+    setTimeout(() => setShowToast(false), 2500);
   };
 
   if (loading) {
@@ -91,6 +97,42 @@ export default function ProductDetailPage() {
 
   return (
     <>
+      <style>{`
+        @keyframes toastPop {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+          60% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes toastSlideIn {
+          0% { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      {/* Fixed Toast Notification */}
+      {showToast && (
+        <div style={{
+          position: "fixed",
+          bottom: "30px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "linear-gradient(135deg, #F28C28, #e07a1f)",
+          color: "#fff",
+          padding: "14px 28px",
+          borderRadius: "14px",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          fontSize: "15px",
+          fontWeight: "600",
+          boxShadow: "0 10px 40px rgba(242,140,40,0.4)",
+          animation: "toastSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          whiteSpace: "nowrap",
+        }}>
+          <span style={{ fontSize: "20px" }}>✅</span>
+          เพิ่มลงตะกร้าแล้ว!
+        </div>
+      )}
       {/* Breadcrumb */}
       <div style={{ background: "linear-gradient(135deg, #FFF8F0, #FFF3E0)", padding: "20px 0" }}>
         <div className="container">
@@ -272,12 +314,14 @@ export default function ProductDetailPage() {
                     disabled={product.stock <= 0}
                     style={{
                       flex: 1, minWidth: "200px", padding: "12px 30px", borderRadius: "25px",
-                      background: product.stock > 0 ? "#F28C28" : "#ccc",
+                      background: product.stock <= 0 ? "#ccc" : (btnAnimate ? "#e07a1f" : "#F28C28"),
                       color: "#fff", border: "none", fontSize: "16px", fontWeight: "600",
                       cursor: product.stock > 0 ? "pointer" : "not-allowed",
+                      transition: "all 0.3s ease",
+                      transform: btnAnimate ? "scale(1.05)" : "scale(1)",
                     }}
                   >
-                    🛒 เพิ่มลงตะกร้า
+                    {btnAnimate ? "✅ เพิ่มลงตะกร้าแล้ว!" : "🛒 เพิ่มลงตะกร้า"}
                   </button>
                 </div>
               </div>

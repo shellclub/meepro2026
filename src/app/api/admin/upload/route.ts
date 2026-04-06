@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { jwtVerify } from "jose";
+
+const secretKey = process.env.JWT_SECRET || 'fallback_secret_key_meepro_2026';
+const key = new TextEncoder().encode(secretKey);
 
 export async function POST(req: NextRequest) {
   try {
+    // ===== Defense-in-depth: verify auth directly (don't rely solely on middleware) =====
+    const token = req.cookies.get('admin_token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    try {
+      await jwtVerify(token, key);
+    } catch {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // ====================================================================================
+
     const formData = await req.formData();
     const files = formData.getAll("files") as File[];
 

@@ -23,8 +23,7 @@ const SidebarCart = ({ closeCart, isCartOpen }: any) => {
       0
     );
     setSubTotal(subtotal);
-    // Calculate VAT
-    const vatAmount = subtotal * 0.2;
+    const vatAmount = subtotal * 0.07;
     setVat(vatAmount);
   }, [cartItems]);
   const total = subTotal + vat;
@@ -53,14 +52,14 @@ const SidebarCart = ({ closeCart, isCartOpen }: any) => {
         <div className="gi-cart-inner">
           <div className="gi-cart-top">
             <div className="gi-cart-title">
-              <span className="cart_title">My Cart</span>
+              <span className="cart_title">ตะกร้าสินค้า</span>
               <Link onClick={closeCart} href="/" className="gi-cart-close">
                 <i onClick={handleSubmit} className="fi-rr-cross-small"></i>
               </Link>
             </div>
             {cartItems.length === 0 ? (
               <div className="gi-pro-content cart-pro-title">
-                Your cart is empty.
+                ตะกร้าของคุณว่างเปล่า
               </div>
             ) : (
               <ul className="gi-cart-pro-items">
@@ -79,7 +78,7 @@ const SidebarCart = ({ closeCart, isCartOpen }: any) => {
                       </Link>
                       <span className="cart-price">
                         {item.waight}{" "}
-                        <span>${item.newPrice * item.quantity}.00</span>
+                        <span>฿{(item.newPrice * item.quantity).toLocaleString()}</span>
                       </span>
                       <div className="qty-plus-minus gi-qty-rtl">
                         <QuantitySelector
@@ -106,17 +105,17 @@ const SidebarCart = ({ closeCart, isCartOpen }: any) => {
                 <table className="table cart-table">
                   <tbody>
                     <tr>
-                      <td className="text-left">Sub-Total :</td>
-                      <td className="text-right">${subTotal.toFixed(2)}</td>
+                      <td className="text-left">ยอดรวม :</td>
+                      <td className="text-right">฿{subTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     </tr>
                     <tr>
-                      <td className="text-left">VAT (20%) :</td>
-                      <td className="text-right">${vat.toFixed(2)}</td>
+                      <td className="text-left">VAT (7%) :</td>
+                      <td className="text-right">฿{vat.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     </tr>
                     <tr>
-                      <td className="text-left">Total :</td>
+                      <td className="text-left">รวมทั้งหมด :</td>
                       <td className="text-right primary-color">
-                        ${total.toFixed(2)}
+                        ฿{total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </td>
                     </tr>
                   </tbody>

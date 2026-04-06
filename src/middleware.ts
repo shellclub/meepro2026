@@ -8,6 +8,17 @@ const key = new TextEncoder().encode(secretKey);
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // ============ SECURITY: Block CVE-2025-29927 middleware bypass ============
+  // Strip/block the x-middleware-subrequest header from external requests
+  // to prevent attackers from bypassing middleware auth
+  if (req.headers.get('x-middleware-subrequest')) {
+    return NextResponse.json(
+      { error: 'Forbidden' },
+      { status: 403 }
+    );
+  }
+  // =========================================================================
+
   const response = NextResponse.next();
 
   // Allow all origins (you can specify your origin for more security in production)

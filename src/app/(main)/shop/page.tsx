@@ -8,6 +8,8 @@ import { addItem } from "@/store/reducers/cartSlice";
 
 function ProductCard({ product }: { product: any }) {
   const dispatch = useDispatch();
+  const [showToast, setShowToast] = useState(false);
+  const [btnAnimate, setBtnAnimate] = useState(false);
   const mainImage = product.images?.[0]?.url || "/assets/img/product-images/1_1.jpg";
 
   const handleAddToCart = () => {
@@ -30,6 +32,10 @@ function ProductCard({ product }: { product: any }) {
         category: product.category?.name || "",
       })
     );
+    setBtnAnimate(true);
+    setShowToast(true);
+    setTimeout(() => setBtnAnimate(false), 400);
+    setTimeout(() => setShowToast(false), 2200);
   };
 
   const discount = product.comparePrice
@@ -37,10 +43,36 @@ function ProductCard({ product }: { product: any }) {
     : 0;
 
   return (
-    <div style={{ background: "#fff", borderRadius: "12px", overflow: "hidden", border: "1px solid #f0f0f0", transition: "all 0.3s ease", height: "100%" }}
+    <div style={{ background: "#fff", borderRadius: "12px", overflow: "hidden", border: "1px solid #f0f0f0", transition: "all 0.3s ease", height: "100%", position: "relative" }}
       onMouseEnter={(e) => { (e.currentTarget).style.boxShadow = "0 5px 20px rgba(242,140,40,0.15)"; }}
       onMouseLeave={(e) => { (e.currentTarget).style.boxShadow = "none"; }}
     >
+      {/* Toast notification */}
+      {showToast && (
+        <div style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "rgba(34, 34, 34, 0.92)",
+          color: "#fff",
+          padding: "12px 20px",
+          borderRadius: "12px",
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          fontSize: "13px",
+          fontWeight: "500",
+          backdropFilter: "blur(8px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+          animation: "toastPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          whiteSpace: "nowrap",
+        }}>
+          <span style={{ fontSize: "18px" }}>✅</span>
+          เพิ่มลงตะกร้าแล้ว
+        </div>
+      )}
       <div style={{ position: "relative", overflow: "hidden" }}>
         {discount > 0 && (
           <span style={{ position: "absolute", top: "10px", left: "10px", zIndex: 2, background: "#F28C28", color: "#fff", padding: "3px 10px", borderRadius: "15px", fontSize: "12px", fontWeight: "600" }}>
@@ -56,8 +88,17 @@ function ProductCard({ product }: { product: any }) {
           </div>
         </Link>
         <button onClick={handleAddToCart}
-          style={{ position: "absolute", bottom: "10px", right: "10px", background: "#F28C28", color: "#fff", border: "none", borderRadius: "50%", width: "40px", height: "40px", cursor: "pointer", fontSize: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
-          🛒
+          style={{
+            position: "absolute", bottom: "10px", right: "10px",
+            background: btnAnimate ? "#e07a1f" : "#F28C28",
+            color: "#fff", border: "none", borderRadius: "50%",
+            width: "40px", height: "40px", cursor: "pointer", fontSize: "16px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            transition: "all 0.2s ease",
+            transform: btnAnimate ? "scale(1.3)" : "scale(1)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+          {btnAnimate ? "✓" : "🛒"}
         </button>
       </div>
       <div style={{ padding: "15px" }}>
@@ -124,6 +165,13 @@ export default function ShopPage() {
 
   return (
     <>
+      <style>{`
+        @keyframes toastPop {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+          60% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+      `}</style>
       {/* Breadcrumb */}
       <div style={{ background: "linear-gradient(135deg, #FFF8F0, #FFF3E0)", padding: "20px 0" }}>
         <div className="container">
