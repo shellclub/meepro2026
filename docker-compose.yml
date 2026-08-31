@@ -23,7 +23,7 @@ services:
       - meepro_uploads:/app/public/uploads
     networks:
       - meepro-net
-      - nginx-proxy-net
+      - npm-network
 
   mariadb:
     image: mariadb:11
@@ -47,5 +47,5 @@ volumes:
 
 networks:
   meepro-net:
-  nginx-proxy-net:
+  npm-network:
     external: true
