@@ -41,7 +41,10 @@ export default function AdminProducts() {
           <h1 style={{ fontSize: "24px", fontWeight: "700", color: "#1e293b", margin: 0 }}>📦 จัดการสินค้า</h1>
           <p style={{ color: "#64748b", margin: "4px 0 0 0", fontSize: "14px" }}>ดู แก้ไข เพิ่ม ลบ สินค้าในระบบ</p>
         </div>
-        <Link href="/admin/products/new" style={btnPrimary}>➕ เพิ่มสินค้า</Link>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Link href="/admin/products/import" style={{ ...btnPrimary, background: "#2563eb" }}>📥 นำเข้าจาก Excel</Link>
+          <Link href="/admin/products/new" style={btnPrimary}>➕ เพิ่มสินค้า</Link>
+        </div>
       </div>
 
       {/* Search */}

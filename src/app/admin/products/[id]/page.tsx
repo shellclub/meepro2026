@@ -17,6 +17,7 @@ export default function AdminProductEdit({ params }: { params: Promise<{ id: str
     images: [{ url: "", alt: "" }],
     variants: [] as { name: string; value: string; priceAdjust: string; stock: number }[],
   });
+  const [bundleItems, setBundleItems] = useState<{ componentProductId: number; name: string; sku: string; quantity: number }[]>([]);
 
   useEffect(() => {
     // Load categories and brands
@@ -50,6 +51,7 @@ export default function AdminProductEdit({ params }: { params: Promise<{ id: str
             images: p.images?.length > 0 ? p.images.map((img: any) => ({ url: img.url, alt: img.alt || "" })) : [{ url: "", alt: "" }],
             variants: p.variants?.map((v: any) => ({ name: v.name, value: v.value, priceAdjust: String(v.priceAdjust ?? 0), stock: v.stock ?? 0 })) || [],
           });
+          setBundleItems(p.bundleItems || []);
         }
         setLoading(false);
       })
@@ -332,6 +334,20 @@ export default function AdminProductEdit({ params }: { params: Promise<{ id: str
             </div>
           ))}
         </div>
+
+        {/* Bundle contents (read-only, populated by BigSeller import) */}
+        {bundleItems.length > 0 && (
+          <div style={{ background: "#fff", borderRadius: "12px", padding: "24px", marginBottom: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0" }}>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#1e293b" }}>📦 สินค้าในเซ็ต (Bundle)</h3>
+            <p style={{ margin: "0 0 15px 0", fontSize: "12px", color: "#94a3b8" }}>นำเข้าจากไฟล์ BigSeller — แก้ไของค์ประกอบได้โดยนำเข้าไฟล์ใหม่เท่านั้น</p>
+            {bundleItems.map((b) => (
+              <div key={b.componentProductId} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f1f5f9", fontSize: "13px" }}>
+                <span style={{ color: "#1e293b" }}>{b.name} <span style={{ color: "#94a3b8" }}>({b.sku})</span></span>
+                <span style={{ color: "#64748b" }}>× {b.quantity}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Submit */}
         <div style={{ display: "flex", gap: "10px" }}>

@@ -11,7 +11,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     const images = await query('SELECT * FROM product_images WHERE productId=? ORDER BY sortOrder', [Number(id)]);
     const variants = await query('SELECT * FROM product_variants WHERE productId=?', [Number(id)]);
-    return NextResponse.json({ product: { ...product, images, variants } });
+    const bundleItems = await query(
+      `SELECT bi.componentProductId, bi.quantity, p.name, p.sku
+       FROM product_bundle_items bi JOIN products p ON p.id = bi.componentProductId
+       WHERE bi.bundleProductId=?`, [Number(id)]
+    );
+    return NextResponse.json({ product: { ...product, images, variants, bundleItems } });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
@@ -36,6 +41,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   try {
     await execute('DELETE FROM product_images WHERE productId=?', [Number(id)]);
     await execute('DELETE FROM product_variants WHERE productId=?', [Number(id)]);
+    await execute('DELETE FROM product_bundle_items WHERE bundleProductId=? OR componentProductId=?', [Number(id), Number(id)]);
     await execute('DELETE FROM products WHERE id=?', [Number(id)]);
     return NextResponse.json({ success: true });
   } catch (e: any) {
