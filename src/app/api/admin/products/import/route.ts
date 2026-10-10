@@ -164,9 +164,13 @@ async function handleBigSellerImport(workbook: XLSX.WorkBook, skuSheetName: stri
       if (existing.length > 0) {
         productId = existing[0].id;
         action = "updated";
+        // BigSeller has no reliable selling price/cost, so a blank value must not wipe what an
+        // admin already set: price, cost and isActive are only overwritten when the file has a
+        // real price, and category/brand are only replaced when the file matched one.
         await execute(
-          `UPDATE products SET name=?, price=?, costPrice=?, stock=?, weight=?, isActive=?, categoryId=?, brandId=?, tags=?, updatedAt=NOW() WHERE id=?`,
-          [name, price, costPrice, stock, weight, isActive ? 1 : 0, categoryId, brandId, tags, productId]
+          `UPDATE products SET name=?, price=IF(?>0, ?, price), costPrice=IF(? IS NOT NULL AND ?>0, ?, costPrice), stock=?, weight=?,
+             isActive=IF(?>0, 1, isActive), categoryId=COALESCE(?, categoryId), brandId=COALESCE(?, brandId), tags=COALESCE(?, tags), updatedAt=NOW() WHERE id=?`,
+          [name, price, price, costPrice, costPrice, costPrice, stock, weight, price, categoryId, brandId, tags, productId]
         );
       } else {
         let slug = toSlug(name) || `product-${sku.toLowerCase()}`;
@@ -188,8 +192,11 @@ async function handleBigSellerImport(workbook: XLSX.WorkBook, skuSheetName: stri
       }
 
       if (mainImageUrl) {
-        await execute("DELETE FROM product_images WHERE productId = ?", [productId]);
-        await execute("INSERT INTO product_images (productId, url, sortOrder, isMain) VALUES (?, ?, 0, 1)", [productId, mainImageUrl]);
+        // Only seed the image for new products or ones without any; never replace images an admin uploaded.
+        const hasImages = await query<{ id: number }>("SELECT id FROM product_images WHERE productId = ? LIMIT 1", [productId]);
+        if (hasImages.length === 0) {
+          await execute("INSERT INTO product_images (productId, url, sortOrder, isMain) VALUES (?, ?, 0, 1)", [productId, mainImageUrl]);
+        }
       }
 
       skuToProductId.set(sku, productId);
