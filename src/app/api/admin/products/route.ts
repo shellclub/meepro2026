@@ -1,20 +1,46 @@
 import { NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 
+// Whitelisted sort columns (never interpolate user input into ORDER BY directly).
+// Thai names/categories sort with the DB collation; NULL categories always go last.
+const SORT_SQL: Record<string, string> = {
+  name: 'p.name',
+  category: 'c.name IS NULL, c.name',
+  status: 'p.isActive',
+  price: 'p.price',
+  stock: 'p.stock',
+  createdAt: 'p.createdAt',
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '20');
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+  const limit = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20));
   const search = searchParams.get('search') || '';
+  const categoryId = searchParams.get('categoryId') || '';
+  const status = searchParams.get('status') || '';
+  const sortKey = SORT_SQL[searchParams.get('sort') || ''] ? (searchParams.get('sort') as string) : 'createdAt';
+  const dir = searchParams.get('dir') === 'asc' ? 'ASC' : 'DESC';
   const offset = (page - 1) * limit;
 
   try {
     let where = 'WHERE 1=1';
     const params: any[] = [];
     if (search) { where += ' AND (p.name LIKE ? OR p.sku LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
+    if (categoryId === 'none') where += ' AND p.categoryId IS NULL';
+    else if (categoryId) { where += ' AND p.categoryId = ?'; params.push(Number(categoryId)); }
+    if (status === 'active') where += ' AND p.isActive = 1';
+    else if (status === 'inactive') where += ' AND p.isActive = 0';
 
     const [countRow] = await query(`SELECT COUNT(*) as c FROM products p ${where}`, params);
     const total = Number(countRow.c);
+    const [statRow] = await query('SELECT COUNT(*) as total, COALESCE(SUM(isActive), 0) as active FROM products');
+    const stats = { total: Number(statRow.total), active: Number(statRow.active), inactive: Number(statRow.total) - Number(statRow.active) };
+
+    // Secondary key keeps pagination stable when the primary key has ties (e.g. many equal prices)
+    const orderBy = sortKey === 'name'
+      ? `p.name ${dir}, p.id ASC`
+      : `${SORT_SQL[sortKey].split(',').map((c) => (c.includes('IS NULL') ? c : `${c.trim()} ${dir}`)).join(', ')}, p.name ASC, p.id ASC`;
 
     const products = await query(
       `SELECT p.*, c.name as categoryName, c.id as catId, b.name as brandName, b.id as brId,
@@ -24,7 +50,7 @@ export async function GET(request: Request) {
        LEFT JOIN brands b ON p.brandId = b.id 
        LEFT JOIN product_images pi ON pi.productId = p.id AND pi.isMain = 1
        ${where}
-       ORDER BY p.createdAt DESC LIMIT ? OFFSET ?`,
+       ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     );
 
@@ -35,7 +61,7 @@ export async function GET(request: Request) {
       images: p.imageUrl ? [{ url: p.imageUrl }] : [],
     }));
 
-    return NextResponse.json({ products: formatted, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+    return NextResponse.json({ products: formatted, stats, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

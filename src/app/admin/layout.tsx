@@ -116,7 +116,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Main Content */}
-        <div style={{ flex: 1, marginLeft: sidebarOpen ? "260px" : "70px", transition: "margin-left 0.3s ease" }}>
+        <div style={{ flex: 1, minWidth: 0, marginLeft: sidebarOpen ? "260px" : "70px", transition: "margin-left 0.3s ease" }}>
           {/* Top bar */}
           <header
             style={{
