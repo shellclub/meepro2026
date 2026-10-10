@@ -8,7 +8,7 @@
 -- To apply it manually instead (e.g. before the next deploy, or on a local/staging DB):
 --   mysql -u root -p meepro_petshop < scripts/migrations/001_add_product_bundle_items.sql
 -- or against the production container directly:
---   ssh <server> 'docker exec -i meepro-mariadb mysql -u root -p"$DB_PASSWORD" meepro_petshop' < scripts/migrations/001_add_product_bundle_items.sql
+--   ssh <server> 'docker exec -i meepro-mariadb mariadb -u root -p"$DB_PASSWORD" meepro_petshop' < scripts/migrations/001_add_product_bundle_items.sql
 
 CREATE TABLE IF NOT EXISTS product_bundle_items (
   id INT AUTO_INCREMENT PRIMARY KEY,

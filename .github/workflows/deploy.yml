@@ -54,14 +54,14 @@ jobs:
             # Apply DB migrations (each file uses CREATE TABLE IF NOT EXISTS, safe to re-run every deploy)
             echo "=== Running DB Migrations ==="
             for i in $(seq 1 30); do
-              docker exec meepro-mariadb mysqladmin ping -u root -p"${{ secrets.DB_PASSWORD }}" --silent 2>/dev/null && break
+              docker exec meepro-mariadb mariadb-admin ping -u root -p"${{ secrets.DB_PASSWORD }}" --silent 2>/dev/null && break
               echo "Waiting for MariaDB to be ready... ($i/30)"
               sleep 2
             done
             for f in scripts/migrations/*.sql; do
               [ -e "$f" ] || continue
               echo "-- applying $f"
-              docker exec -i meepro-mariadb mysql -u root -p"${{ secrets.DB_PASSWORD }}" meepro_petshop < "$f"
+              docker exec -i meepro-mariadb mariadb -u root -p"${{ secrets.DB_PASSWORD }}" meepro_petshop < "$f"
             done
 
             # Force reconnect nginx-proxy-manager to shared network for DNS refresh
