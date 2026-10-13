@@ -81,7 +81,9 @@ export default function AdminProducts() {
   };
 
   const resetFilters = () => { setSearch(""); setCategoryId(""); setStatus(""); setPage(1); };
-  const hasFilters = !!(search || categoryId || status);
+  const hasFilters = !!(debouncedSearch || categoryId || status);
+  // Export honors the filters and sort currently shown, but ignores paging (exports every match)
+  const filterQuery = new URLSearchParams({ sort, dir, ...(debouncedSearch ? { search: debouncedSearch } : {}), ...(categoryId ? { categoryId } : {}), ...(status ? { status } : {}) }).toString();
 
   const from = pagination.total === 0 ? 0 : (pagination.page - 1) * limit + 1;
   const to = Math.min(pagination.page * limit, pagination.total);
@@ -141,6 +143,10 @@ export default function AdminProducts() {
           <p style={{ color: "#64748b", margin: "2px 0 0 0", fontSize: 13 }}>ทั้งหมด {stats.total.toLocaleString()} รายการ</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
+          <a href={`/api/admin/products/export?${filterQuery}`} download className="pl-btn" style={{ background: "#16a34a" }}
+             title={hasFilters ? "ส่งออกเฉพาะรายการตามตัวกรองปัจจุบัน" : "ส่งออกสินค้าทั้งหมด"}>
+            📤 ส่งออก Excel{hasFilters ? ` (${Number(pagination.total).toLocaleString()})` : ""}
+          </a>
           <Link href="/admin/products/import" className="pl-btn" style={{ background: "#2563eb" }}>📥 นำเข้าจาก Excel</Link>
           <Link href="/admin/products/new" className="pl-btn" style={{ background: "#F28C28" }}>➕ เพิ่มสินค้า</Link>
         </div>

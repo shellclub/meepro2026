@@ -2,19 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import * as XLSX from "xlsx";
 import { query, execute } from "@/lib/db";
+import { PRODUCT_HEADERS, VARIANT_HEADERS } from "@/lib/admin-products";
 
 const secretKey = process.env.JWT_SECRET || "fallback_secret_key_meepro_2026";
 const key = new TextEncoder().encode(secretKey);
-
-const PRODUCT_HEADERS = [
-  "SKU*", "ชื่อสินค้า*", "หมวดหมู่", "แบรนด์", "ราคาขาย*", "ราคาเต็ม", "ราคาทุน",
-  "จำนวนสต๊อก*", "น้ำหนัก/ขนาด", "หน่วย", "คำอธิบายสั้น", "คำอธิบายเต็ม",
-  "แท็ก", "สถานะ", "สินค้าแนะนำ", "เปิดใช้งาน", "รูปภาพหลัก (URL)", "รูปภาพเพิ่มเติม (URL)",
-] as const;
-
-const VARIANT_HEADERS = [
-  "SKU สินค้า*", "ชื่อตัวเลือก*", "ค่า*", "ส่วนต่างราคา", "สต๊อกตัวเลือก", "SKU ตัวเลือก", "เปิดใช้งาน",
-] as const;
 
 // Columns actually used from a BigSeller "SKU" export (the tool sellers use to sync SKUs
 // across marketplaces). Only the columns we read are required — unused columns (GTIN,
