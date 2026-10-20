@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type ImportRow = { row: number; sku: string; status: "created" | "updated" | "error"; message?: string };
+type ImportRow = { sheet?: string; row: number; sku: string; status: "created" | "updated" | "error"; message?: string };
 type ImportSummary = {
   created: number;
   updated: number;
@@ -13,7 +13,8 @@ type ImportSummary = {
   categoryUnmatched?: number;
   bundlesLinked?: number;
 };
-type ImportResult = { success: boolean; summary: ImportSummary; results: ImportRow[] } | { error: string };
+type SheetInfo = { name: string; kind: string; rows: number; note?: string };
+type ImportResult = { success: boolean; summary: ImportSummary; results: ImportRow[]; sheets?: SheetInfo[] } | { error: string };
 
 export default function AdminProductImport() {
   const [file, setFile] = useState<File | null>(null);
@@ -160,6 +161,21 @@ export default function AdminProductImport() {
             </div>
           )}
 
+          {result.sheets && result.sheets.length > 0 && (
+            <div style={{ marginBottom: "16px" }}>
+              <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "600", color: "#334155" }}>แท็บในไฟล์ ({result.sheets.length})</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {result.sheets.map((sh) => (
+                  <div key={sh.name} style={{ display: "flex", gap: "8px", alignItems: "baseline", fontSize: "13px", color: sh.kind === "ข้าม" ? "#b45309" : "#334155" }}>
+                    <span>{sh.kind === "ข้าม" ? "⏭️" : "✅"}</span>
+                    <strong>{sh.name}</strong>
+                    <span style={{ color: "#64748b" }}>{sh.kind === "ข้าม" ? sh.note : `${sh.kind} · ${sh.rows.toLocaleString()} แถว`}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {errorRows.length > 0 && (
             <>
               <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", fontWeight: "600", color: "#dc2626" }}>รายการที่ผิดพลาด (แก้ไขในไฟล์แล้วอัปโหลดใหม่เฉพาะแถวที่พลาด)</h4>
@@ -167,6 +183,7 @@ export default function AdminProductImport() {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                   <thead>
                     <tr style={{ background: "#f8fafc" }}>
+                      <th style={{ padding: "8px 10px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b" }}>แท็บ</th>
                       <th style={{ padding: "8px 10px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b" }}>แถวที่</th>
                       <th style={{ padding: "8px 10px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b" }}>SKU</th>
                       <th style={{ padding: "8px 10px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b" }}>สาเหตุ</th>
@@ -175,6 +192,7 @@ export default function AdminProductImport() {
                   <tbody>
                     {errorRows.map((r, idx) => (
                       <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                        <td style={{ padding: "8px 10px", color: "#64748b" }}>{r.sheet || "-"}</td>
                         <td style={{ padding: "8px 10px" }}>{r.row}</td>
                         <td style={{ padding: "8px 10px" }}>{r.sku}</td>
                         <td style={{ padding: "8px 10px", color: "#dc2626" }}>{r.message}</td>

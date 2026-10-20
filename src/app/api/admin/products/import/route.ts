@@ -36,6 +36,39 @@ function toNumberOrNull(val: any): number | null {
   return Number.isFinite(n) ? n : NaN;
 }
 
+type RowResult = { sheet?: string; row: number; sku: string; status: "created" | "updated" | "error"; message?: string };
+type SheetInfo = { name: string; kind: string; rows: number; note?: string };
+type ImportPart = { summary: Record<string, number>; results: RowResult[]; sheets: SheetInfo[] };
+// One data row plus where it came from, so rows from several tabs (each with its own column
+// order) can be processed in a single pass and errors can point at "tab X, row N".
+type SheetRow = { r: any[]; rowNum: number; sheet: string; idx: Record<string, number> };
+
+type SheetKind = "template-product" | "template-variant" | "bigseller-product" | "bigseller-bundle" | "unknown";
+
+// Tabs are recognised by their header row (not by tab name), so any number of tabs, in any order
+// and with any names, can be dropped into one file.
+function classifySheet(ws: XLSX.WorkSheet): { kind: SheetKind; headers: string[]; rows: number } {
+  const raw: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
+  const headers = (raw[0] || []).map((h) => String(h).trim());
+  const has = (h: string) => headers.includes(h);
+  const rows = Math.max(0, raw.length - 1);
+  let kind: SheetKind = "unknown";
+  if (PRODUCT_HEADERS.every(has)) kind = "template-product";
+  else if (VARIANT_HEADERS.every(has)) kind = "template-variant";
+  else if (has("เลข SKU") && headers.some((h) => /^SKU เดียว \d+$/.test(h))) kind = "bigseller-bundle";
+  else if (BIGSELLER_HEADERS.every(has)) kind = "bigseller-product";
+  return { kind, headers, rows };
+}
+
+function collectRows(workbook: XLSX.WorkBook, sheetNames: string[], expectedHeaders: readonly string[]): SheetRow[] {
+  const out: SheetRow[] = [];
+  for (const sheet of sheetNames) {
+    const { rows, headerIndex } = sheetToRows(workbook.Sheets[sheet], expectedHeaders);
+    rows.forEach((r, i) => out.push({ r, rowNum: i + 2, sheet, idx: headerIndex })); // +2: header row, 1-indexed
+  }
+  return out;
+}
+
 function sheetToRows(ws: XLSX.WorkSheet, expectedHeaders: readonly string[]): { rows: any[][]; headerIndex: Record<string, number> } {
   const raw: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
   if (raw.length === 0) return { rows: [], headerIndex: {} };
@@ -64,48 +97,38 @@ async function loadLookups() {
 // ("pending price") until an admin fills in a real price. Category/brand names in this export are
 // marketplace tags (VAT rate, promo labels, etc.), not this store's taxonomy, so unmatched values
 // are just left blank instead of blocking the row.
-async function handleBigSellerImport(workbook: XLSX.WorkBook, skuSheetName: string, bundleSheetName: string | undefined) {
-  let productRows: any[][], productHeaderIndex: Record<string, number>;
-  try {
-    ({ rows: productRows, headerIndex: productHeaderIndex } = sheetToRows(workbook.Sheets[skuSheetName], BIGSELLER_HEADERS));
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
-  }
+async function handleBigSellerImport(workbook: XLSX.WorkBook, productSheetNames: string[], bundleSheetNames: string[]): Promise<ImportPart> {
+  // Every SKU tab is swept into one pass (a SKU that appears on several tabs is just updated again).
+  const productItems = collectRows(workbook, productSheetNames, BIGSELLER_HEADERS);
 
-  // Bundle component detail sheet: one row per bundle SKU, with repeating column groups
-  // "SKU เดียว N" / "ชื่อ SKU N" / "จำนวน SKUN" / ... for each component slot (N is dynamic).
-  const bundleDetailBySku = new Map<string, any[]>();
-  const componentGroups: { skuCol: number; qtyCol: number }[] = [];
-  let bundleSkuColIdx = 0;
-  if (bundleSheetName) {
-    const raw: any[][] = XLSX.utils.sheet_to_json(workbook.Sheets[bundleSheetName], { header: 1, blankrows: false, defval: "" });
-    if (raw.length > 0) {
-      const headerRow = raw[0].map((h) => String(h).trim());
-      headerRow.forEach((h, i) => {
-        if (h === "เลข SKU") bundleSkuColIdx = i;
-        const m = h.match(/^SKU เดียว (\d+)$/);
-        if (m) componentGroups.push({ skuCol: i, qtyCol: i + 2 });
-      });
-      for (const row of raw.slice(1)) {
-        const sku = String(row[bundleSkuColIdx] ?? "").trim();
-        if (sku) bundleDetailBySku.set(sku, row);
-      }
+  // Bundle component detail tabs: one row per bundle SKU, with repeating column groups
+  // "SKU เดียว N" / "ชื่อ SKU N" / "จำนวน SKUN" / ... for each component slot (N is dynamic, and
+  // can differ between tabs, so each row keeps its own tab's column groups).
+  const bundleDetailBySku = new Map<string, { row: any[]; sheet: string; groups: { skuCol: number; qtyCol: number }[] }>();
+  for (const sheet of bundleSheetNames) {
+    const raw: any[][] = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { header: 1, blankrows: false, defval: "" });
+    if (raw.length === 0) continue;
+    const headerRow = raw[0].map((h) => String(h).trim());
+    const skuCol = headerRow.indexOf("เลข SKU");
+    const groups: { skuCol: number; qtyCol: number }[] = [];
+    headerRow.forEach((h, i) => { if (/^SKU เดียว \d+$/.test(h)) groups.push({ skuCol: i, qtyCol: i + 2 }); });
+    for (const row of raw.slice(1)) {
+      const sku = String(row[skuCol] ?? "").trim();
+      if (sku) bundleDetailBySku.set(sku, { row, sheet, groups });
     }
   }
 
   const { categoryByName, brandByName, usedSlugs } = await loadLookups();
 
-  const results: { row: number; sku: string; status: "created" | "updated" | "error"; message?: string }[] = [];
+  const results: RowResult[] = [];
   const skuToProductId = new Map<string, number>();
-  const bundleProductsToLink: { row: number; sku: string; productId: number }[] = [];
+  const bundleProductsToLink: { sheet: string; row: number; sku: string; productId: number }[] = [];
   let pendingPriceCount = 0;
   let categoryUnmatched = 0;
 
-  for (let i = 0; i < productRows.length; i++) {
-    const r = productRows[i];
-    const rowNum = i + 2;
+  for (const { r, rowNum, sheet, idx } of productItems) {
     const get = (h: string) => {
-      const v = r[productHeaderIndex[h]];
+      const v = r[idx[h]];
       return v === undefined ? "" : String(v).trim();
     };
 
@@ -191,29 +214,30 @@ async function handleBigSellerImport(workbook: XLSX.WorkBook, skuSheetName: stri
       }
 
       skuToProductId.set(sku, productId);
-      if (skuType === "Bundle SKU") bundleProductsToLink.push({ row: rowNum, sku, productId });
-      results.push({ row: rowNum, sku, status: action });
+      if (skuType === "Bundle SKU") bundleProductsToLink.push({ sheet, row: rowNum, sku, productId });
+      results.push({ sheet, row: rowNum, sku, status: action });
     } catch (e: any) {
-      results.push({ row: rowNum, sku: sku || "(ไม่มี SKU)", status: "error", message: e.message || "เกิดข้อผิดพลาด" });
+      results.push({ sheet, row: rowNum, sku: sku || "(ไม่มี SKU)", status: "error", message: e.message || "เกิดข้อผิดพลาด" });
     }
   }
 
   // Bundle linking runs after every row is imported so components listed later in the
   // file are already in skuToProductId by the time their parent bundle is linked.
-  const bundleErrors: { row: number; sku: string; status: "error"; message: string }[] = [];
+  const bundleErrors: RowResult[] = [];
   let bundlesLinked = 0;
 
-  for (const { row, sku, productId } of bundleProductsToLink) {
-    const detailRow = bundleDetailBySku.get(sku);
-    if (!detailRow) {
-      bundleErrors.push({ row, sku, status: "error", message: `ไม่พบรายละเอียดส่วนประกอบของ Bundle SKU "${sku}" ในชีต "${bundleSheetName}"` });
+  for (const { sheet, row, sku, productId } of bundleProductsToLink) {
+    const detail = bundleDetailBySku.get(sku);
+    if (!detail) {
+      bundleErrors.push({ sheet, row, sku, status: "error", message: `ไม่พบรายละเอียดส่วนประกอบของ Bundle SKU "${sku}" (ไม่มีแท็บรายละเอียด Bundle ที่มี SKU นี้)` });
       continue;
     }
+    const detailRow = detail.row;
 
     await execute("DELETE FROM product_bundle_items WHERE bundleProductId = ?", [productId]);
 
     let linkedAny = false;
-    for (const { skuCol, qtyCol } of componentGroups) {
+    for (const { skuCol, qtyCol } of detail.groups) {
       const componentSku = String(detailRow[skuCol] ?? "").trim();
       if (!componentSku) continue;
       const qty = Number(detailRow[qtyCol]) || 1;
@@ -224,7 +248,7 @@ async function handleBigSellerImport(workbook: XLSX.WorkBook, skuSheetName: stri
         if (found.length > 0) componentProductId = found[0].id;
       }
       if (!componentProductId) {
-        bundleErrors.push({ row, sku, status: "error", message: `ไม่พบ SKU ส่วนประกอบ "${componentSku}" (ทั้งในไฟล์นี้และในระบบ)` });
+        bundleErrors.push({ sheet, row, sku, status: "error", message: `ไม่พบ SKU ส่วนประกอบ "${componentSku}" (ทั้งในไฟล์นี้และในระบบ)` });
         continue;
       }
 
@@ -247,78 +271,26 @@ async function handleBigSellerImport(workbook: XLSX.WorkBook, skuSheetName: stri
     bundlesLinked,
   };
 
-  return NextResponse.json({ success: true, summary, results: allResults });
+  const sheets: SheetInfo[] = [
+    ...productSheetNames.map((name) => ({ name, kind: "SKU สินค้า (BigSeller)", rows: productItems.filter((i) => i.sheet === name).length })),
+    ...bundleSheetNames.map((name) => ({ name, kind: "รายละเอียด Bundle (BigSeller)", rows: [...bundleDetailBySku.values()].filter((d) => d.sheet === name).length })),
+  ];
+  return { summary, results: allResults, sheets };
 }
 
-export async function POST(req: NextRequest) {
-  // Defense-in-depth: verify auth directly (middleware also covers /api/admin/*)
-  const token = req.cookies.get("admin_token")?.value;
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  try {
-    await jwtVerify(token, key);
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  let file: File | null;
-  try {
-    const formData = await req.formData();
-    file = formData.get("file") as File | null;
-  } catch {
-    return NextResponse.json({ error: "ไม่สามารถอ่านไฟล์ที่ส่งมาได้" }, { status: 400 });
-  }
-
-  if (!file) {
-    return NextResponse.json({ error: "กรุณาแนบไฟล์ Excel (.xlsx)" }, { status: 400 });
-  }
-  if (!/\.xlsx$/i.test(file.name)) {
-    return NextResponse.json({ error: "รองรับเฉพาะไฟล์ .xlsx เท่านั้น" }, { status: 400 });
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    return NextResponse.json({ error: "ไฟล์ใหญ่เกินไป (สูงสุด 10MB)" }, { status: 400 });
-  }
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  let workbook: XLSX.WorkBook;
-  try {
-    workbook = XLSX.read(buffer, { type: "buffer" });
-  } catch {
-    return NextResponse.json({ error: "ไม่สามารถอ่านไฟล์ Excel ได้ ไฟล์อาจเสียหายหรือไม่ใช่ไฟล์ .xlsx ที่ถูกต้อง" }, { status: 400 });
-  }
-
-  const productSheetName = workbook.SheetNames.find((n) => n === "สินค้า") || workbook.SheetNames.find((n) => n.includes("สินค้า") && !n.includes("ตัวเลือก") && !n.includes("อ้างอิง"));
-  const variantSheetName = workbook.SheetNames.find((n) => n === "ตัวเลือกสินค้า") || workbook.SheetNames.find((n) => n.includes("ตัวเลือกสินค้า"));
-
-  if (!productSheetName) {
-    const bigSellerSheetName = workbook.SheetNames.find((n) => n === "SKU");
-    if (bigSellerSheetName) {
-      const bigSellerBundleSheetName = workbook.SheetNames.find((n) => n.includes("Bundle SKU"));
-      return handleBigSellerImport(workbook, bigSellerSheetName, bigSellerBundleSheetName);
-    }
-    return NextResponse.json({ error: 'ไม่พบชีต "สินค้า" ในไฟล์ที่อัปโหลด กรุณาใช้ไฟล์ template ต้นฉบับ หรือไฟล์ export จาก BigSeller (ชีต "SKU")' }, { status: 400 });
-  }
-
-  let productRows: any[][], productHeaderIndex: Record<string, number>;
-  let variantRows: any[][] = [], variantHeaderIndex: Record<string, number> = {};
-  try {
-    ({ rows: productRows, headerIndex: productHeaderIndex } = sheetToRows(workbook.Sheets[productSheetName], PRODUCT_HEADERS));
-    if (variantSheetName) {
-      ({ rows: variantRows, headerIndex: variantHeaderIndex } = sheetToRows(workbook.Sheets[variantSheetName], VARIANT_HEADERS));
-    }
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
-  }
+// Imports one or more tabs in the system's own template layout (products + optional variants).
+async function handleTemplateImport(workbook: XLSX.WorkBook, productSheetNames: string[], variantSheetNames: string[]): Promise<ImportPart> {
+  const productItems = collectRows(workbook, productSheetNames, PRODUCT_HEADERS);
+  const variantItems = collectRows(workbook, variantSheetNames, VARIANT_HEADERS);
 
   const { categoryByName, brandByName, usedSlugs } = await loadLookups();
 
-  const results: { row: number; sku: string; status: "created" | "updated" | "error"; message?: string }[] = [];
+  const results: RowResult[] = [];
   const skuToProductId = new Map<string, number>();
 
-  for (let i = 0; i < productRows.length; i++) {
-    const r = productRows[i];
-    const rowNum = i + 2; // account for header row, 1-indexed for user-facing message
+  for (const { r, rowNum, sheet, idx } of productItems) {
     const get = (h: string) => {
-      const v = r[productHeaderIndex[h]];
+      const v = r[idx[h]];
       return v === undefined ? "" : String(v).trim();
     };
 
@@ -418,21 +390,19 @@ export async function POST(req: NextRequest) {
       }
 
       skuToProductId.set(sku, productId);
-      results.push({ row: rowNum, sku, status: action });
+      results.push({ sheet, row: rowNum, sku, status: action });
     } catch (e: any) {
-      results.push({ row: rowNum, sku: sku || "(ไม่มี SKU)", status: "error", message: e.message || "เกิดข้อผิดพลาด" });
+      results.push({ sheet, row: rowNum, sku: sku || "(ไม่มี SKU)", status: "error", message: e.message || "เกิดข้อผิดพลาด" });
     }
   }
 
   // Variants: group by product SKU, replace variants for any SKU mentioned
-  const variantsByProductSku = new Map<string, { row: number; name: string; value: string; priceAdjust: number; stock: number; sku: string; isActive: boolean }[]>();
-  const variantErrors: { row: number; sku: string; status: "error"; message: string }[] = [];
+  const variantsByProductSku = new Map<string, { sheet: string; row: number; name: string; value: string; priceAdjust: number; stock: number; sku: string; isActive: boolean }[]>();
+  const variantErrors: RowResult[] = [];
 
-  for (let i = 0; i < variantRows.length; i++) {
-    const r = variantRows[i];
-    const rowNum = i + 2;
+  for (const { r, rowNum, sheet, idx } of variantItems) {
     const get = (h: string) => {
-      const v = r[variantHeaderIndex[h]];
+      const v = r[idx[h]];
       return v === undefined ? "" : String(v).trim();
     };
     const productSku = get("SKU สินค้า*");
@@ -441,18 +411,18 @@ export async function POST(req: NextRequest) {
     if (!productSku && !vName && !vValue) continue;
 
     if (!productSku || !vName || !vValue) {
-      variantErrors.push({ row: rowNum, sku: productSku || "(ไม่มี SKU)", status: "error", message: "ต้องกรอก SKU สินค้า, ชื่อตัวเลือก และค่า ให้ครบ" });
+      variantErrors.push({ sheet, row: rowNum, sku: productSku || "(ไม่มี SKU)", status: "error", message: "ต้องกรอก SKU สินค้า, ชื่อตัวเลือก และค่า ให้ครบ" });
       continue;
     }
     const priceAdjust = toNumberOrNull(get("ส่วนต่างราคา")) ?? 0;
     const vStockRaw = get("สต๊อกตัวเลือก");
     const vStock = vStockRaw === "" ? 0 : Number(vStockRaw);
     if (Number.isNaN(priceAdjust) || Number.isNaN(vStock)) {
-      variantErrors.push({ row: rowNum, sku: productSku, status: "error", message: "ส่วนต่างราคา/สต๊อกตัวเลือก ต้องเป็นตัวเลข" });
+      variantErrors.push({ sheet, row: rowNum, sku: productSku, status: "error", message: "ส่วนต่างราคา/สต๊อกตัวเลือก ต้องเป็นตัวเลข" });
       continue;
     }
     const list = variantsByProductSku.get(productSku) || [];
-    list.push({ row: rowNum, name: vName, value: vValue, priceAdjust, stock: vStock, sku: get("SKU ตัวเลือก"), isActive: parseYN(get("เปิดใช้งาน"), true) });
+    list.push({ sheet, row: rowNum, name: vName, value: vValue, priceAdjust, stock: vStock, sku: get("SKU ตัวเลือก"), isActive: parseYN(get("เปิดใช้งาน"), true) });
     variantsByProductSku.set(productSku, list);
   }
 
@@ -463,7 +433,7 @@ export async function POST(req: NextRequest) {
       if (found.length > 0) productId = found[0].id;
     }
     if (!productId) {
-      for (const v of variants) variantErrors.push({ row: v.row, sku: productSku, status: "error", message: `ไม่พบสินค้าที่มี SKU "${productSku}" (ทั้งในไฟล์นี้และในระบบ)` });
+      for (const v of variants) variantErrors.push({ sheet: v.sheet, row: v.row, sku: productSku, status: "error", message: `ไม่พบสินค้าที่มี SKU "${productSku}" (ทั้งในไฟล์นี้และในระบบ)` });
       continue;
     }
     await execute("DELETE FROM product_variants WHERE productId = ?", [productId]);
@@ -483,5 +453,92 @@ export async function POST(req: NextRequest) {
     variantsImported: variantsByProductSku.size - new Set(variantErrors.map((e) => e.sku)).size,
   };
 
-  return NextResponse.json({ success: true, summary, results: allResults });
+  const sheets: SheetInfo[] = [
+    ...productSheetNames.map((name) => ({ name, kind: "สินค้า (template)", rows: productItems.filter((i) => i.sheet === name).length })),
+    ...variantSheetNames.map((name) => ({ name, kind: "ตัวเลือกสินค้า (template)", rows: variantItems.filter((i) => i.sheet === name).length })),
+  ];
+  return { summary, results: allResults, sheets };
+}
+
+export async function POST(req: NextRequest) {
+  // Defense-in-depth: verify auth directly (middleware also covers /api/admin/*)
+  const token = req.cookies.get("admin_token")?.value;
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    await jwtVerify(token, key);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let file: File | null;
+  try {
+    const formData = await req.formData();
+    file = formData.get("file") as File | null;
+  } catch {
+    return NextResponse.json({ error: "ไม่สามารถอ่านไฟล์ที่ส่งมาได้" }, { status: 400 });
+  }
+
+  if (!file) {
+    return NextResponse.json({ error: "กรุณาแนบไฟล์ Excel (.xlsx)" }, { status: 400 });
+  }
+  if (!/\.xlsx$/i.test(file.name)) {
+    return NextResponse.json({ error: "รองรับเฉพาะไฟล์ .xlsx เท่านั้น" }, { status: 400 });
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    return NextResponse.json({ error: "ไฟล์ใหญ่เกินไป (สูงสุด 10MB)" }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  let workbook: XLSX.WorkBook;
+  try {
+    workbook = XLSX.read(buffer, { type: "buffer" });
+  } catch {
+    return NextResponse.json({ error: "ไม่สามารถอ่านไฟล์ Excel ได้ ไฟล์อาจเสียหายหรือไม่ใช่ไฟล์ .xlsx ที่ถูกต้อง" }, { status: 400 });
+  }
+
+  // Sweep every tab: classify each by its header row, then import all the tabs we recognise.
+  const kinds: Record<SheetKind, string[]> = { "template-product": [], "template-variant": [], "bigseller-product": [], "bigseller-bundle": [], unknown: [] };
+  const skipped: SheetInfo[] = [];
+  const REFERENCE_TAB = /คำอธิบาย|อ้างอิง/; // the template's own help/lookup tabs: expected, not worth a warning
+  for (const name of workbook.SheetNames) {
+    const { kind, rows, headers } = classifySheet(workbook.Sheets[name]);
+    kinds[kind].push(name);
+    if (kind === "unknown" && !REFERENCE_TAB.test(name)) {
+      // A tab that is *almost* a known layout (edited/missing header) deserves a precise message
+      const near = ([PRODUCT_HEADERS, BIGSELLER_HEADERS, VARIANT_HEADERS] as (readonly string[])[])
+        .map((exp) => ({ exp, hit: exp.filter((h) => headers.includes(h)).length }))
+        .sort((a, b) => b.hit - a.hit)[0];
+      const almost = rows > 0 && near.hit >= Math.ceil(near.exp.length * 0.6);
+      skipped.push({
+        name, kind: "ข้าม", rows,
+        note: rows === 0
+          ? "แท็บว่าง"
+          : almost
+            ? `หัวคอลัมน์ไม่ครบหรือถูกแก้ไข ขาด: ${near.exp.filter((h) => !headers.includes(h)).join(", ")}`
+            : `ไม่รู้จักรูปแบบหัวคอลัมน์ (${headers.filter(Boolean).slice(0, 4).join(", ")}…)`,
+      });
+    }
+  }
+
+  const hasTemplate = kinds["template-product"].length > 0;
+  const hasBigSeller = kinds["bigseller-product"].length > 0;
+  if (!hasTemplate && !hasBigSeller) {
+    return NextResponse.json({
+      error: "ไม่พบแท็บสินค้าที่รู้จักในไฟล์ที่อัปโหลด กรุณาใช้ไฟล์ template ต้นฉบับ หรือไฟล์ export จาก BigSeller (แท็บ SKU)" +
+        (skipped.length ? ` — แท็บที่พบ: ${skipped.map((s) => `"${s.name}"`).join(", ")}` : ""),
+    }, { status: 400 });
+  }
+
+  const parts: ImportPart[] = [];
+  try {
+    if (hasTemplate) parts.push(await handleTemplateImport(workbook, kinds["template-product"], kinds["template-variant"]));
+    if (hasBigSeller) parts.push(await handleBigSellerImport(workbook, kinds["bigseller-product"], kinds["bigseller-bundle"]));
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || "นำเข้าไม่สำเร็จ" }, { status: 400 });
+  }
+
+  const summary: Record<string, number> = {};
+  for (const part of parts) for (const [k, v] of Object.entries(part.summary)) summary[k] = (summary[k] || 0) + v;
+  const sheets = [...parts.flatMap((p) => p.sheets), ...skipped];
+  return NextResponse.json({ success: true, summary, results: parts.flatMap((p) => p.results), sheets });
 }
