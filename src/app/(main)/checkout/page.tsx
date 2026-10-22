@@ -258,7 +258,7 @@ export default function CheckoutPage() {
                     <div key={i} style={{ display: "flex", gap: "12px", padding: "12px 0", borderBottom: "1px solid #f5f5f5" }}>
                       <img src={item.image} alt={item.title}
                         style={{ width: "60px", height: "60px", borderRadius: "8px", objectFit: "cover" }}
-                        onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/product-images/1_1.jpg"; }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/nophoto.svg"; }}
                       />
                       <div style={{ flex: 1 }}>
                         <p style={{ margin: 0, fontSize: "13px", fontWeight: "500", color: "#333" }}>{item.title}</p>

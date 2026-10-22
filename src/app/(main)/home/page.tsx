@@ -23,20 +23,12 @@ function HeroSlider() {
       .then((data) => {
         if (data.banners && data.banners.length > 0) {
           setSlides(data.banners);
-        } else {
-          // Fallback if no data
-          setSlides([
-            {
-              image: "/assets/img/banners/banner-1.jpg",
-              title: "อาหารแมวคุณภาพ",
-              subtitle: "ลดสูงสุด 30% สำหรับสมาชิก",
-              link: "/shop?category=cat-food",
-            }
-          ]);
         }
       })
       .catch((e) => console.error(e));
   }, []);
+
+  if (slides.length === 0) return null;
 
   return (
     <section className="gi-hero-section" style={{ marginBottom: "30px" }}>
@@ -236,7 +228,7 @@ function ProductCard({ product }: { product: any }) {
   const dispatch = useDispatch();
   const [showToast, setShowToast] = useState(false);
   const [btnAnimate, setBtnAnimate] = useState(false);
-  const mainImage = product.images?.[0]?.url || "/assets/img/product-images/1_1.jpg";
+  const mainImage = product.images?.[0]?.url || "/assets/img/nophoto.svg";
   const hoverImage = product.images?.[1]?.url || mainImage;
 
   const handleAddToCart = () => {
@@ -338,7 +330,7 @@ function ProductCard({ product }: { product: any }) {
                 transition: "opacity 0.3s ease",
               }}
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "/assets/img/product-images/1_1.jpg";
+                (e.target as HTMLImageElement).src = "/assets/img/nophoto.svg";
               }}
             />
           </div>

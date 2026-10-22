@@ -10,7 +10,7 @@ function ProductCard({ product }: { product: any }) {
   const dispatch = useDispatch();
   const [showToast, setShowToast] = useState(false);
   const [btnAnimate, setBtnAnimate] = useState(false);
-  const mainImage = product.images?.[0]?.url || "/assets/img/product-images/1_1.jpg";
+  const mainImage = product.images?.[0]?.url || "/assets/img/nophoto.svg";
 
   const handleAddToCart = () => {
     dispatch(
@@ -83,7 +83,7 @@ function ProductCard({ product }: { product: any }) {
           <div style={{ width: "100%", paddingBottom: "100%", position: "relative", background: "#f9f9f9" }}>
             <img src={mainImage} alt={product.name}
               style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
-              onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/product-images/1_1.jpg"; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/nophoto.svg"; }}
             />
           </div>
         </Link>

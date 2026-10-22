@@ -39,7 +39,7 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product || !canAdd) return;
-    const mainImage = product.images?.[0]?.url || "/assets/img/product-images/1_1.jpg";
+    const mainImage = product.images?.[0]?.url || "/assets/img/nophoto.svg";
     const price = selectedVariant
       ? parseFloat(product.price) + parseFloat(selectedVariant.priceAdjust)
       : parseFloat(product.price);
@@ -94,7 +94,7 @@ export default function ProductDetailPage() {
 
   const images = product.images?.length > 0
     ? product.images
-    : [{ url: "/assets/img/product-images/1_1.jpg", alt: product.name }];
+    : [{ url: "/assets/img/nophoto.svg", alt: product.name }];
 
   // Group variants by name
   const variantGroups: Record<string, any[]> = {};
@@ -172,7 +172,7 @@ export default function ProductDetailPage() {
                     src={images[selectedImage]?.url}
                     alt={product.name}
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", padding: "20px" }}
-                    onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/product-images/1_1.jpg"; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/nophoto.svg"; }}
                   />
                 </div>
               </div>
@@ -189,7 +189,7 @@ export default function ProductDetailPage() {
                       }}
                     >
                       <img src={img.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/product-images/1_1.jpg"; }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/nophoto.svg"; }}
                       />
                     </div>
                   ))}
@@ -359,9 +359,9 @@ export default function ProductDetailPage() {
                       <div style={{ background: "#fff", borderRadius: "12px", overflow: "hidden", border: "1px solid #f0f0f0" }}>
                         <div style={{ width: "100%", paddingBottom: "100%", position: "relative", background: "#f9f9f9" }}>
                           <img
-                            src={rp.images?.[0]?.url || "/assets/img/product-images/1_1.jpg"}
+                            src={rp.images?.[0]?.url || "/assets/img/nophoto.svg"}
                             alt={rp.name} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                            onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/product-images/1_1.jpg"; }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = "/assets/img/nophoto.svg"; }}
                           />
                         </div>
                         <div style={{ padding: "12px" }}>

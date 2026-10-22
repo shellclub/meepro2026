@@ -1,23 +1,15 @@
 import { NextResponse } from 'next/server';
-import { staticBanners } from '@/lib/static-data';
-
-let prisma: any = null;
-try {
-  prisma = require('@/lib/prisma').default;
-} catch (e) {}
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    if (prisma) {
-      const banners = await prisma.banner.findMany({
-        where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
-      });
-      return NextResponse.json({ banners });
-    }
+    const banners = await prisma.banner.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return NextResponse.json({ banners });
   } catch (e) {
-    // DB not available
+    console.error('GET /api/meepro/banners failed', e);
+    return NextResponse.json({ error: 'Failed to load banners', banners: [] }, { status: 500 });
   }
-
-  return NextResponse.json({ banners: staticBanners });
 }
