@@ -15,7 +15,8 @@ export async function GET(request: Request) {
   try {
     let where = "WHERE p.isActive = 1 AND p.status <> 'discontinued'";
     const params: any[] = [];
-    if (category) { where += ' AND c.slug = ?'; params.push(category); }
+    if (category === 'no-category') { where += ' AND (c.slug = ? OR p.categoryId IS NULL)'; params.push(category); }
+    else if (category) { where += ' AND c.slug = ?'; params.push(category); }
     if (brand) { where += ' AND b.slug = ?'; params.push(brand); }
     if (featured === 'true') { where += ' AND p.isFeatured = 1'; }
     if (search) {

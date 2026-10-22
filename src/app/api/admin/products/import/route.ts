@@ -83,6 +83,29 @@ function sheetToRows(ws: XLSX.WorkSheet, expectedHeaders: readonly string[]): { 
   return { rows: raw.slice(1), headerIndex };
 }
 
+// BigSeller's "ไม่มีหมวดหมู่" ("no category") is kept as a real category, so products that were never
+// categorised still show up on the storefront under it.
+const NO_CATEGORY_NAME = "ไม่มีหมวดหมู่";
+const NO_CATEGORY_SLUG = "no-category";
+
+// Finds a category by name or creates it (slug made unique), keeping the lookup map in sync.
+async function ensureCategory(name: string, categoryByName: Map<string, number>): Promise<number> {
+  const key = name.trim().toLowerCase();
+  const found = categoryByName.get(key);
+  if (found) return found;
+  const baseSlug = name.trim() === NO_CATEGORY_NAME ? NO_CATEGORY_SLUG : toSlug(name) || "category";
+  let slug = baseSlug;
+  for (let n = 2; (await query("SELECT 1 FROM categories WHERE slug = ? LIMIT 1", [slug])).length > 0; n++) slug = `${baseSlug}-${n}`;
+  const maxSort = await query<{ m: number | null }>("SELECT MAX(sortOrder) AS m FROM categories");
+  const result = await execute(
+    "INSERT INTO categories (name, slug, sortOrder, isActive, createdAt, updatedAt) VALUES (?, ?, ?, 1, NOW(), NOW())",
+    [name.trim(), slug, Number(maxSort[0]?.m ?? 0) + 1]
+  );
+  const id = Number(result.insertId);
+  categoryByName.set(key, id);
+  return id;
+}
+
 async function loadLookups() {
   const categories = await query<{ id: number; name: string }>("SELECT id, name FROM categories");
   const brands = await query<{ id: number; name: string }>("SELECT id, name FROM brands");
@@ -158,11 +181,11 @@ async function handleBigSellerImport(workbook: XLSX.WorkBook, productSheetNames:
       const weight = weightG ? `${weightG} g` : null;
 
       const categoryNameRaw = get("หมวดหมู่");
-      let categoryId: number | null = null;
-      if (categoryNameRaw) {
-        categoryId = categoryByName.get(categoryNameRaw.toLowerCase()) ?? null;
-        if (categoryId === null) categoryUnmatched++;
-      }
+      // A real category name from the file is created on demand. Blank / "ไม่มีหมวดหมู่" only fills in
+      // the no-category bucket when the product has no category yet (never overrides an admin's choice).
+      const isNoCategory = !categoryNameRaw || categoryNameRaw === NO_CATEGORY_NAME;
+      const categoryId: number | null = isNoCategory ? null : await ensureCategory(categoryNameRaw, categoryByName);
+      const noCategoryId = await ensureCategory(NO_CATEGORY_NAME, categoryByName);
 
       const brandNameRaw = get("แบรนด์");
       const brandId = brandNameRaw ? brandByName.get(brandNameRaw.toLowerCase()) ?? null : null;
@@ -184,8 +207,8 @@ async function handleBigSellerImport(workbook: XLSX.WorkBook, productSheetNames:
         // real price, and category/brand are only replaced when the file matched one.
         await execute(
           `UPDATE products SET name=?, price=IF(?>0, ?, price), costPrice=IF(? IS NOT NULL AND ?>0, ?, costPrice), stock=?, weight=?,
-             isActive=IF(?>0, 1, isActive), categoryId=COALESCE(?, categoryId), brandId=COALESCE(?, brandId), tags=COALESCE(?, tags), updatedAt=NOW() WHERE id=?`,
-          [name, price, price, costPrice, costPrice, costPrice, stock, weight, price, categoryId, brandId, tags, productId]
+             isActive=IF(?>0, 1, isActive), categoryId=COALESCE(?, categoryId, ?), brandId=COALESCE(?, brandId), tags=COALESCE(?, tags), updatedAt=NOW() WHERE id=?`,
+          [name, price, price, costPrice, costPrice, costPrice, stock, weight, price, categoryId, noCategoryId, brandId, tags, productId]
         );
       } else {
         let slug = toSlug(name) || `product-${sku.toLowerCase()}`;
@@ -200,7 +223,7 @@ async function handleBigSellerImport(workbook: XLSX.WorkBook, productSheetNames:
         const result = await execute(
           `INSERT INTO products (name, slug, sku, price, costPrice, stock, weight, isFeatured, isActive, status, categoryId, brandId, tags, createdAt, updatedAt)
            VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 'available', ?, ?, ?, NOW(), NOW())`,
-          [name, slug, sku, price, costPrice, stock, weight, isActive ? 1 : 0, categoryId, brandId, tags]
+          [name, slug, sku, price, costPrice, stock, weight, isActive ? 1 : 0, categoryId ?? noCategoryId, brandId, tags]
         );
         productId = Number(result.insertId);
         action = "created";
