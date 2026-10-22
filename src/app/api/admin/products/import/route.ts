@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import * as XLSX from "xlsx";
 import { query, execute } from "@/lib/db";
+import { syncProductStock } from "@/lib/stock";
 import { PRODUCT_HEADERS, VARIANT_HEADERS } from "@/lib/admin-products";
 
 const secretKey = process.env.JWT_SECRET || "fallback_secret_key_meepro_2026";
@@ -443,6 +444,7 @@ async function handleTemplateImport(workbook: XLSX.WorkBook, productSheetNames: 
         [productId, v.name, v.value, v.priceAdjust, v.stock, v.sku || null, v.isActive ? 1 : 0]
       );
     }
+    await syncProductStock(productId);
   }
 
   const allResults = [...results, ...variantErrors];

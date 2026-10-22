@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server';
-import { staticProducts } from '@/lib/static-data';
-
-let prisma: any = null;
-try {
-  prisma = require('@/lib/prisma').default;
-} catch (e) {}
+import prisma from '@/lib/prisma';
 
 export async function GET(
   request: Request,
@@ -12,50 +7,44 @@ export async function GET(
 ) {
   const { id } = await params;
   const productId = parseInt(id);
-
-  try {
-    if (prisma) {
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        include: {
-          category: { select: { id: true, name: true, slug: true } },
-          brand: { select: { id: true, name: true, slug: true } },
-          images: { orderBy: { sortOrder: 'asc' } },
-          variants: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
-        },
-      });
-
-      if (!product) {
-        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-      }
-
-      const relatedProducts = await prisma.product.findMany({
-        where: {
-          categoryId: product.categoryId,
-          id: { not: product.id },
-          isActive: true,
-        },
-        include: {
-          images: { orderBy: { sortOrder: 'asc' }, take: 1 },
-        },
-        take: 4,
-      });
-
-      return NextResponse.json({ product, relatedProducts });
-    }
-  } catch (e) {
-    // DB not available
-  }
-
-  // Static fallback
-  const product = staticProducts.find(p => p.id === productId);
-  if (!product) {
+  if (Number.isNaN(productId)) {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 });
   }
 
-  const relatedProducts = staticProducts
-    .filter(p => p.category?.id === product.category?.id && p.id !== product.id)
-    .slice(0, 4);
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        brand: { select: { id: true, name: true, slug: true } },
+        images: { orderBy: { sortOrder: 'asc' } },
+        variants: { where: { isActive: true }, orderBy: { id: 'asc' } },
+      },
+    });
 
-  return NextResponse.json({ product, relatedProducts });
+    if (!product || !product.isActive || product.status === 'discontinued') {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    const relatedProducts = await prisma.product.findMany({
+      where: {
+        categoryId: product.categoryId,
+        id: { not: product.id },
+        isActive: true,
+        status: { not: 'discontinued' },
+      },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+      },
+      take: 4,
+    });
+
+    return NextResponse.json({
+      product: product.stock > 0 ? product : { ...product, status: 'out_of_stock' },
+      relatedProducts,
+    });
+  } catch (e) {
+    console.error('GET /api/meepro/products/[id] failed', e);
+    return NextResponse.json({ error: 'Failed to load product' }, { status: 500 });
+  }
 }

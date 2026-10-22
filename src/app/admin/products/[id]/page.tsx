@@ -15,7 +15,7 @@ export default function AdminProductEdit({ params }: { params: Promise<{ id: str
     stock: 0, weight: "", unit: "กรัม", isFeatured: false, isActive: true, status: "available",
     categoryId: "", brandId: "", tags: "",
     images: [{ url: "", alt: "" }],
-    variants: [] as { name: string; value: string; priceAdjust: string; stock: number }[],
+    variants: [] as { id?: number; name: string; value: string; priceAdjust: string; stock: number }[],
   });
   const [bundleItems, setBundleItems] = useState<{ componentProductId: number; name: string; sku: string; quantity: number }[]>([]);
 
@@ -49,7 +49,7 @@ export default function AdminProductEdit({ params }: { params: Promise<{ id: str
             brandId: String(p.brandId ?? ""),
             tags: p.tags || "",
             images: p.images?.length > 0 ? p.images.map((img: any) => ({ url: img.url, alt: img.alt || "" })) : [{ url: "", alt: "" }],
-            variants: p.variants?.map((v: any) => ({ name: v.name, value: v.value, priceAdjust: String(v.priceAdjust ?? 0), stock: v.stock ?? 0 })) || [],
+            variants: p.variants?.map((v: any) => ({ id: v.id, name: v.name, value: v.value, priceAdjust: String(v.priceAdjust ?? 0), stock: v.stock ?? 0 })) || [],
           });
           setBundleItems(p.bundleItems || []);
         }

@@ -17,6 +17,8 @@ interface Item {
   sku: number;
   category: string;
   quantity: number;
+  variantId?: number;
+  variantName?: string;
 }
 
 export interface CounterState {

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import { staticProducts } from '@/lib/static-data';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,7 +13,7 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
 
   try {
-    let where = 'WHERE p.isActive = 1';
+    let where = "WHERE p.isActive = 1 AND p.status <> 'discontinued'";
     const params: any[] = [];
     if (category) { where += ' AND c.slug = ?'; params.push(category); }
     if (brand) { where += ' AND b.slug = ?'; params.push(brand); }
@@ -24,6 +23,7 @@ export async function GET(request: Request) {
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
+    // In-stock products first, then the requested order
     let orderBy = 'p.createdAt DESC';
     switch (sort) {
       case 'price_asc': orderBy = 'p.price ASC'; break;
@@ -45,14 +45,14 @@ export async function GET(request: Request) {
        LEFT JOIN brands b ON p.brandId = b.id 
        LEFT JOIN product_images pi ON pi.productId = p.id AND pi.isMain = 1
        ${where}
-       ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+       ORDER BY (p.stock > 0 AND p.status = 'available') DESC, ${orderBy} LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     );
 
     const formatted = products.map((p: any) => ({
       id: p.id, name: p.name, slug: p.slug, description: p.description, shortDesc: p.shortDesc,
-      sku: p.sku, price: p.price, comparePrice: p.comparePrice, stock: p.stock, weight: p.weight,
-      isFeatured: p.isFeatured, isActive: p.isActive, status: p.status, rating: p.rating,
+      sku: p.sku, price: p.price, comparePrice: p.comparePrice, stock: Number(p.stock), weight: p.weight,
+      isFeatured: p.isFeatured, isActive: p.isActive, status: Number(p.stock) > 0 ? p.status : 'out_of_stock', rating: p.rating,
       reviewCount: p.reviewCount, salesCount: p.salesCount, tags: p.tags,
       category: p.catId ? { id: p.catId, name: p.categoryName, slug: p.categorySlug } : null,
       brand: p.brId ? { id: p.brId, name: p.brandName, slug: p.brandSlug } : null,
@@ -61,36 +61,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ products: formatted, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   } catch (e) {
-    // DB not available, fall through to static data
-  }
-
-  // Static fallback
-  let filtered = [...staticProducts];
-  if (category) filtered = filtered.filter(p => p.category?.slug === category);
-  if (brand) filtered = filtered.filter(p => p.brand?.slug === brand);
-  if (featured === 'true') filtered = filtered.filter(p => p.isFeatured);
-  if (search) {
-    const s = search.toLowerCase();
-    filtered = filtered.filter(p =>
-      p.name.toLowerCase().includes(s) ||
-      (p.description || '').toLowerCase().includes(s) ||
-      (p.tags || '').toLowerCase().includes(s)
+    console.error('GET /api/meepro/products failed', e);
+    return NextResponse.json(
+      { error: 'Failed to load products', products: [], pagination: { page, limit, total: 0, totalPages: 0 } },
+      { status: 500 }
     );
   }
-
-  switch (sort) {
-    case 'price_asc': filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)); break;
-    case 'price_desc': filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price)); break;
-    case 'name': filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
-    case 'popular': filtered.sort((a, b) => b.salesCount - a.salesCount); break;
-    case 'rating': filtered.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating)); break;
-  }
-
-  const total = filtered.length;
-  const paginated = filtered.slice((page - 1) * limit, page * limit);
-
-  return NextResponse.json({
-    products: paginated,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  });
 }

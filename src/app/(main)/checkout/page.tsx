@@ -67,6 +67,8 @@ export default function CheckoutPage() {
           },
           items: cartItems.map((item: any) => ({
             productId: item.id,
+            variantId: item.variantId,
+            variantName: item.variantName,
             productName: item.title,
             price: item.newPrice,
             quantity: item.quantity,

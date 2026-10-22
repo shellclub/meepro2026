@@ -1,3 +1,4 @@
+import { syncProductStock } from '@/lib/stock';
 import { NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { buildProductFilter } from '@/lib/admin-products';
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
         await execute('INSERT INTO product_variants (productId, name, value, priceAdjust, stock, isActive) VALUES (?, ?, ?, ?, ?, 1)', [productId, v.name, v.value, v.priceAdjust || 0, v.stock || 0]);
       }
     }
+    await syncProductStock(productId);
     return NextResponse.json({ product: { id: productId } }, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

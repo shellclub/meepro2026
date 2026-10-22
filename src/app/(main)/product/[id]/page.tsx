@@ -31,8 +31,14 @@ export default function ProductDetailPage() {
     }
   }, [params.id]);
 
+  const hasVariants = (product?.variants?.length ?? 0) > 0;
+  // With variants, stock is per selected variant; the main product stock is their sum
+  const availableStock: number = selectedVariant ? selectedVariant.stock : (product?.stock ?? 0);
+  const needsVariant = hasVariants && !selectedVariant;
+  const canAdd = !needsVariant && availableStock > 0;
+
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || !canAdd) return;
     const mainImage = product.images?.[0]?.url || "/assets/img/product-images/1_1.jpg";
     const price = selectedVariant
       ? parseFloat(product.price) + parseFloat(selectedVariant.priceAdjust)
@@ -54,6 +60,8 @@ export default function ProductDetailPage() {
         location: "",
         brand: product.brand?.name || "",
         sku: product.id,
+        variantId: selectedVariant?.id,
+        variantName: selectedVariant ? `${selectedVariant.name}: ${selectedVariant.value}` : undefined,
         category: product.category?.name || "",
       })
     );
@@ -250,8 +258,8 @@ export default function ProductDetailPage() {
                   )}
                   <div style={{ display: "flex", gap: "8px" }}>
                     <span style={{ color: "#999" }}>สถานะ:</span>
-                    <span style={{ color: product.stock > 0 ? "#28A745" : "#DC3545", fontWeight: "500" }}>
-                      {product.stock > 0 ? `มีสินค้า (${product.stock})` : "สินค้าหมด"}
+                    <span style={{ color: availableStock > 0 ? "#28A745" : "#DC3545", fontWeight: "500" }}>
+                      {availableStock > 0 ? `มีสินค้า (${availableStock})` : "สินค้าหมด"}
                     </span>
                   </div>
                 </div>
@@ -268,16 +276,18 @@ export default function ProductDetailPage() {
                           {variants.map((v: any) => (
                             <button
                               key={v.id}
-                              onClick={() => setSelectedVariant(selectedVariant?.id === v.id ? null : v)}
+                              onClick={() => { setSelectedVariant(selectedVariant?.id === v.id ? null : v); setQuantity(1); }}
+                              disabled={v.stock <= 0}
                               style={{
                                 padding: "8px 18px", borderRadius: "8px",
                                 border: selectedVariant?.id === v.id ? "2px solid #F28C28" : "1px solid #ddd",
                                 background: selectedVariant?.id === v.id ? "#FFF3E0" : "#fff",
                                 color: selectedVariant?.id === v.id ? "#F28C28" : "#666",
-                                cursor: "pointer", fontSize: "13px", fontWeight: "500",
+                                cursor: v.stock > 0 ? "pointer" : "not-allowed", fontSize: "13px", fontWeight: "500",
+                                opacity: v.stock > 0 ? 1 : 0.5,
                               }}
                             >
-                              {v.value}
+                              {v.value}{v.stock <= 0 && <span style={{ fontSize: "11px", marginLeft: "5px" }}>(หมด)</span>}
                               {parseFloat(v.priceAdjust) !== 0 && (
                                 <span style={{ fontSize: "11px", marginLeft: "5px" }}>
                                   ({parseFloat(v.priceAdjust) > 0 ? "+" : ""}฿{parseFloat(v.priceAdjust).toLocaleString()})
@@ -301,27 +311,27 @@ export default function ProductDetailPage() {
                     <input
                       type="number"
                       value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={(e) => setQuantity(Math.min(Math.max(1, availableStock), Math.max(1, parseInt(e.target.value) || 1)))}
                       style={{ width: "50px", height: "40px", border: "none", textAlign: "center", fontSize: "16px", fontWeight: "600" }}
                     />
                     <button
-                      onClick={() => setQuantity(quantity + 1)}
+                      onClick={() => setQuantity(Math.min(Math.max(1, availableStock), quantity + 1))}
                       style={{ width: "40px", height: "40px", border: "none", background: "#f5f5f5", cursor: "pointer", fontSize: "18px" }}
                     >+</button>
                   </div>
                   <button
                     onClick={handleAddToCart}
-                    disabled={product.stock <= 0}
+                    disabled={!canAdd}
                     style={{
                       flex: 1, minWidth: "200px", padding: "12px 30px", borderRadius: "25px",
-                      background: product.stock <= 0 ? "#ccc" : (btnAnimate ? "#e07a1f" : "#F28C28"),
+                      background: !canAdd ? "#ccc" : (btnAnimate ? "#e07a1f" : "#F28C28"),
                       color: "#fff", border: "none", fontSize: "16px", fontWeight: "600",
-                      cursor: product.stock > 0 ? "pointer" : "not-allowed",
+                      cursor: canAdd ? "pointer" : "not-allowed",
                       transition: "all 0.3s ease",
                       transform: btnAnimate ? "scale(1.05)" : "scale(1)",
                     }}
                   >
-                    {btnAnimate ? "✅ เพิ่มลงตะกร้าแล้ว!" : "🛒 เพิ่มลงตะกร้า"}
+                    {btnAnimate ? "✅ เพิ่มลงตะกร้าแล้ว!" : needsVariant ? "กรุณาเลือกตัวเลือก" : availableStock <= 0 ? "สินค้าหมด" : "🛒 เพิ่มลงตะกร้า"}
                   </button>
                 </div>
               </div>
