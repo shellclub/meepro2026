@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 
 const defaultConfigs = [
+  { group: "maintenance", key: "maintenance_enabled", label: "เปิดโหมดปิดปรับปรุงเว็บไซต์", defaultValue: "0" },
+  { group: "maintenance", key: "maintenance_message", label: "ข้อความที่แสดงในหน้าปิดปรับปรุง", defaultValue: "" },
   { group: "product", key: "available_colors", label: "สีที่มี (คั่นด้วย ,)", defaultValue: "ดำ,ขาว,น้ำตาล,เทา,ชมพู,ฟ้า,แดง,เขียว,ส้ม" },
   { group: "product", key: "available_sizes", label: "ไซส์ที่มี", defaultValue: "XS,S,M,L,XL,XXL" },
   { group: "product", key: "available_weights", label: "น้ำหนักที่มี", defaultValue: "100g,250g,500g,1kg,2kg,3kg,5kg,10kg" },
@@ -43,6 +45,7 @@ export default function AdminSettings() {
   };
 
   const groups = [
+    { key: "maintenance", label: "🛠️ ปิดปรับปรุงเว็บไซต์" },
     { key: "product", label: "📐 ตั้งค่าสินค้า (สี, ไซส์, น้ำหนัก, รสชาติ)" },
     { key: "shop", label: "🏪 ข้อมูลร้านค้า" },
     { key: "shipping", label: "🚚 การจัดส่ง" },
@@ -70,8 +73,15 @@ export default function AdminSettings() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "15px" }}>
             {defaultConfigs.filter(dc => dc.group === group.key).map(dc => (
               <div key={dc.key}>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "13px", fontWeight: "600", color: "#374151" }}>{dc.label}</label>
-                {dc.key.includes("address") ? (
+                {dc.key !== "maintenance_enabled" && <label style={{ display: "block", marginBottom: "6px", fontSize: "13px", fontWeight: "600", color: "#374151" }}>{dc.label}</label>}
+                {dc.key === "maintenance_enabled" ? (
+                  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "14px" }}>
+                    <input type="checkbox" checked={configs[dc.key] === "1"} onChange={e => setConfigs({ ...configs, [dc.key]: e.target.checked ? "1" : "0" })} style={{ width: 20, height: 20 }} />
+                    {configs[dc.key] === "1" ? "🔴 กำลังปิดปรับปรุง (ลูกค้าเห็นหน้าปิดปรับปรุง)" : "🟢 เว็บไซต์เปิดให้บริการปกติ"}
+                  </label>
+                ) : dc.key === "maintenance_message" ? (
+                  <textarea style={{ ...iS, minHeight: "80px" }} placeholder="เว้นว่างเพื่อใช้ข้อความเริ่มต้น" value={configs[dc.key] || ""} onChange={e => setConfigs({ ...configs, [dc.key]: e.target.value })} />
+                ) : dc.key.includes("address") ? (
                   <textarea style={{ ...iS, minHeight: "60px" }} value={configs[dc.key] || ""} onChange={e => setConfigs({ ...configs, [dc.key]: e.target.value })} />
                 ) : (
                   <input style={iS} value={configs[dc.key] || ""} onChange={e => setConfigs({ ...configs, [dc.key]: e.target.value })} />
