@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logAudit } from "@/lib/audit";
 import { jwtVerify } from "jose";
 import * as XLSX from "xlsx";
 import { query, execute } from "@/lib/db";
@@ -565,5 +566,6 @@ export async function POST(req: NextRequest) {
   const summary: Record<string, number> = {};
   for (const part of parts) for (const [k, v] of Object.entries(part.summary)) summary[k] = (summary[k] || 0) + v;
   const sheets = [...parts.flatMap((p) => p.sheets), ...skipped];
+  await logAudit(req, { action: 'import', entity: 'product', summary: `นำเข้าสินค้าจากไฟล์ ${file.name}: ${Object.entries(summary).map(([k, v]) => `${k}=${v}`).join(', ')}`, changes: { file: file.name, summary } });
   return NextResponse.json({ success: true, summary, results: parts.flatMap((p) => p.results), sheets });
 }

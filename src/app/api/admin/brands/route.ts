@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
+import { logAudit } from '@/lib/audit';
 
 export async function GET() {
   try {
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
       'INSERT INTO brands (name, slug, logo, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
       [body.name, body.slug, body.logo || null, body.isActive !== false ? 1 : 0]
     );
+    await logAudit(request, { action: 'create', entity: 'brand', entityId: Number(result.insertId), summary: `เพิ่มแบรนด์ ${body.name}` });
     return NextResponse.json({ brand: { id: Number(result.insertId), ...body } }, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

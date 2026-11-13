@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { queryOne } from '@/lib/db';
 import { signJwt } from '@/lib/jwt';
+import { logAudit } from '@/lib/audit';
 
 export async function POST(request: Request) {
   try {
@@ -15,17 +16,20 @@ export async function POST(request: Request) {
     const admin = await queryOne('SELECT * FROM admin_users WHERE username = ? AND isActive = 1', [username]);
 
     if (!admin) {
+      await logAudit(request, { action: 'login_failed', entity: 'auth', summary: `เข้าสู่ระบบไม่สำเร็จ (ไม่พบผู้ใช้): ${String(username).slice(0, 100)}` }, { username: String(username).slice(0, 100) });
       return NextResponse.json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' }, { status: 401 });
     }
 
     const isValid = await bcrypt.compare(password, admin.password);
 
     if (!isValid) {
+      await logAudit(request, { action: 'login_failed', entity: 'auth', summary: `เข้าสู่ระบบไม่สำเร็จ (รหัสผ่านผิด): ${admin.username}` }, { id: admin.id, username: admin.username });
       return NextResponse.json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' }, { status: 401 });
     }
 
     const token = await signJwt({ id: admin.id, username: admin.username, role: admin.role, name: admin.name });
 
+    await logAudit(request, { action: 'login', entity: 'auth', summary: `เข้าสู่ระบบ: ${admin.username}` }, { id: admin.id, username: admin.username });
     const response = NextResponse.json({ success: true, user: { id: admin.id, name: admin.name, username: admin.username, role: admin.role } });
     
     // Set HTTP-only cookie

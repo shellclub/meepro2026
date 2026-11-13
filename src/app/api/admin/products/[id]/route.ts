@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logAudit, diffFields, PRODUCT_FIELDS } from '@/lib/audit';
 import { syncProductStock } from '@/lib/stock';
 import { query, queryOne, execute } from '@/lib/db';
 
@@ -27,6 +28,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params;
   try {
     const body = await req.json();
+    const before = await queryOne('SELECT * FROM products WHERE id=?', [Number(id)]);
+    const variantsBefore = Array.isArray(body.variants) ? await query('SELECT id, name, value, priceAdjust, stock, isActive FROM product_variants WHERE productId=?', [Number(id)]) : null;
     await execute(
       `UPDATE products SET name=?, slug=?, description=?, shortDesc=?, sku=?, price=?, comparePrice=?, costPrice=?, stock=?, weight=?, unit=?, isFeatured=?, isActive=?, status=?, categoryId=?, brandId=?, tags=?, updatedAt=NOW() WHERE id=?`,
       [body.name, body.slug, body.description, body.shortDesc, body.sku, body.price, body.comparePrice, body.costPrice, body.stock, body.weight, body.unit, body.isFeatured ? 1 : 0, body.isActive ? 1 : 0, body.status, body.categoryId || null, body.brandId || null, body.tags, Number(id)]
@@ -55,6 +58,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       }
     }
     await syncProductStock(Number(id));
+    const changes: Record<string, any> = diffFields(before, body, PRODUCT_FIELDS);
+    if (variantsBefore) {
+      const variantsAfter = await query('SELECT id, name, value, priceAdjust, stock, isActive FROM product_variants WHERE productId=?', [Number(id)]);
+      if (JSON.stringify(variantsBefore) !== JSON.stringify(variantsAfter)) changes.variants = { from: variantsBefore, to: variantsAfter };
+    }
+    if (Object.keys(changes).length > 0) {
+      await logAudit(req, { action: 'update', entity: 'product', entityId: id, summary: `แก้ไขสินค้า ${body.name || before?.name} (SKU ${before?.sku || '-'}): ${Object.keys(changes).join(', ')}`, changes });
+    }
     return NextResponse.json({ product: { id: Number(id) } });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
@@ -64,10 +75,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    const before = await queryOne('SELECT * FROM products WHERE id=?', [Number(id)]);
     await execute('DELETE FROM product_images WHERE productId=?', [Number(id)]);
     await execute('DELETE FROM product_variants WHERE productId=?', [Number(id)]);
     await execute('DELETE FROM product_bundle_items WHERE bundleProductId=? OR componentProductId=?', [Number(id), Number(id)]);
     await execute('DELETE FROM products WHERE id=?', [Number(id)]);
+    await logAudit(_req, { action: 'delete', entity: 'product', entityId: id, summary: `ลบสินค้า ${before?.name || id} (SKU ${before?.sku || '-'})`, changes: before });
     return NextResponse.json({ success: true });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

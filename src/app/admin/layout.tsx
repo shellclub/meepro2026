@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,13 +10,18 @@ const menuItems = [
   { label: "จัดการหมวดหมู่", href: "/admin/categories", icon: "📁" },
   { label: "จัดการแบรนด์", href: "/admin/brands", icon: "🏷️" },
   { label: "คำสั่งซื้อ", href: "/admin/orders", icon: "🛒" },
-  { label: "จัดการผู้ใช้งาน", href: "/admin/users", icon: "👥" },
+  { label: "จัดการผู้ใช้งาน", href: "/admin/users", icon: "👥", superOnly: true },
+  { label: "ประวัติการใช้งาน", href: "/admin/logs", icon: "🕘", superOnly: true },
   { label: "ตั้งค่าร้านค้า", href: "/admin/settings", icon: "⚙️" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
+  useEffect(() => {
+    fetch("/api/admin/me/").then(r => r.json()).then(d => setRole(d.user?.role || null)).catch(() => {});
+  }, []);
 
   if (pathname === '/admin/login' || pathname === '/admin/login/') {
     return <div style={{ minHeight: "100vh", background: "#f0f2f5" }}>{children}</div>;
@@ -64,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {/* Menu */}
           <nav style={{ flex: 1, padding: "10px 0" }}>
-            {menuItems.map((item) => {
+            {menuItems.filter((m: any) => !m.superOnly || role === "superadmin").map((item) => {
               const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
               return (
                 <Link

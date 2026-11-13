@@ -1,6 +1,7 @@
 import { syncProductStock } from '@/lib/stock';
 import { NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
+import { logAudit, diffFields, PRODUCT_FIELDS } from '@/lib/audit';
 import { buildProductFilter } from '@/lib/admin-products';
 
 export async function GET(request: Request) {
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       }
     }
     await syncProductStock(productId);
+    await logAudit(request, { action: 'create', entity: 'product', entityId: productId, summary: `เพิ่มสินค้า ${body.name} (SKU ${body.sku || '-'})` });
     return NextResponse.json({ product: { id: productId } }, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
